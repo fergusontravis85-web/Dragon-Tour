@@ -1,0 +1,225 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Dragon Tour Leaderboard</title>
+
+<style>
+:root{
+  --green:#0b3d2e;
+  --cream:#f3efe3;
+  --gold:#d7c58a;
+  --muted:rgba(255,255,255,.7);
+  --line:rgba(255,255,255,.15);
+  --card:rgba(10,47,36,.88);
+}
+
+*{box-sizing:border-box}
+
+body{
+  margin:0;
+  font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
+  color:var(--cream);
+  min-height:100vh;
+  background:#000;
+}
+
+/* Background */
+.bg{
+  position:fixed;
+  inset:0;
+  background:
+    linear-gradient(180deg, rgba(0,0,0,.65), rgba(0,0,0,.85)),
+    url("https://tpc.com/wp-content/uploads/2020/04/Sawgrass1_1920x1200.jpg");
+  background-size:cover;
+  background-position:center;
+  z-index:-1;
+}
+
+/* Layout */
+.wrap{
+  max-width:900px;
+  margin:auto;
+  padding:28px 16px 40px;
+}
+
+.header{
+  display:flex;
+  justify-content:space-between;
+  align-items:flex-end;
+  padding:18px;
+  background:linear-gradient(180deg, #0b3d2e, #08261d);
+  border-radius:14px;
+  border:1px solid var(--line);
+}
+
+.header h1{
+  margin:0;
+  font-size:16px;
+  letter-spacing:.12em;
+  text-transform:uppercase;
+  font-weight:800;
+}
+
+.meta{
+  font-size:12px;
+  text-align:right;
+  color:var(--muted);
+}
+
+/* Board */
+.board{
+  margin-top:14px;
+  background:var(--card);
+  border-radius:14px;
+  border:1px solid var(--line);
+  overflow:hidden;
+}
+
+.board-head, .row{
+  display:grid;
+  grid-template-columns:64px 1fr 140px;
+  padding:14px 16px;
+  align-items:center;
+}
+
+.board-head{
+  font-size:12px;
+  letter-spacing:.12em;
+  text-transform:uppercase;
+  color:var(--muted);
+  border-bottom:1px solid var(--line);
+}
+
+.row{
+  border-bottom:1px solid var(--line);
+}
+
+.row:last-child{border-bottom:none}
+
+.pos{
+  font-weight:900;
+  color:var(--gold);
+}
+
+.team{
+  font-weight:700;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+
+.points{
+  text-align:right;
+  font-weight:900;
+  font-size:18px;
+}
+
+.points span{
+  font-size:12px;
+  color:var(--muted);
+  margin-left:6px;
+  letter-spacing:.12em;
+}
+
+.status{
+  padding:10px 16px;
+  font-size:12px;
+  color:var(--muted);
+  display:flex;
+  justify-content:space-between;
+  border-top:1px solid var(--line);
+}
+</style>
+</head>
+
+<body>
+<div class="bg"></div>
+
+<div class="wrap">
+  <div class="header">
+    <h1>Dragon Tour Leaderboard</h1>
+    <div class="meta">
+      Last update:<br>
+      <strong id="lastUpdate">—</strong>
+    </div>
+  </div>
+
+  <div class="board">
+    <div class="board-head">
+      <div>Pos</div>
+      <div>Team</div>
+      <div style="text-align:right;">Points</div>
+    </div>
+    <div id="rows"></div>
+    <div class="status">
+      <span>Live</span>
+      <span>Auto-refreshing</span>
+    </div>
+  </div>
+</div>
+
+<script>
+const SHEET_CSV_URL =
+"https://docs.google.com/spreadsheets/d/1-Wo8A1lNGSMO6z85mLvxemk2CxP_tPihK9mEzTeesOA/export?format=csv&gid=0";
+
+const REFRESH_MS = 10000;
+
+const rowsEl = document.getElementById("rows");
+const lastUpdateEl = document.getElementById("lastUpdate");
+
+function parseCSV(text){
+  const lines = text.trim().split(/\r?\n/);
+  const headers = lines.shift().split(",").map(h=>h.toLowerCase());
+  const teamIdx = headers.indexOf("team");
+  const pointsIdx = headers.indexOf("points");
+
+  return lines.map(l=>{
+    const c=l.split(",");
+    return {
+      team:c[teamIdx]?.replace(/"/g,""),
+      points:Number(c[pointsIdx])||0
+    };
+  });
+}
+
+function golfPositions(data){
+  const pos=[];
+  let i=0;
+  while(i<data.length){
+    let j=i+1;
+    while(j<data.length && data[j].points===data[i].points) j++;
+    const label=(j-i>1)?"T"+(i+1):String(i+1);
+    for(let k=i;k<j;k++) pos[k]=label;
+    i=j;
+  }
+  return pos;
+}
+
+function render(data){
+  data.sort((a,b)=>b.points-a.points || a.team.localeCompare(b.team));
+  const pos=golfPositions(data);
+  rowsEl.innerHTML="";
+  data.forEach((d,i)=>{
+    rowsEl.innerHTML+=`
+      <div class="row">
+        <div class="pos">${pos[i]}</div>
+        <div class="team">${d.team}</div>
+        <div class="points">${d.points}<span>PTS</span></div>
+      </div>`;
+  });
+}
+
+async function load(){
+  const res=await fetch(SHEET_CSV_URL+"&t="+Date.now());
+  const text=await res.text();
+  render(parseCSV(text));
+  lastUpdateEl.textContent=new Date().toLocaleString();
+}
+
+load();
+setInterval(load, REFRESH_MS);
+</script>
+</body>
+</html>
