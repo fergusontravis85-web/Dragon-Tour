@@ -106,12 +106,51 @@ body{
   backdrop-filter: blur(6px);
 }
 
+/* Toggle row */
+.controls{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:12px;
+  padding:12px 16px;
+  border-bottom:1px solid var(--line);
+  background:linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,0));
+}
+.controls .label{
+  font-size:12px;
+  color:var(--muted);
+  letter-spacing:.02em;
+}
+.segment{
+  display:inline-flex;
+  border:1px solid rgba(255,255,255,.14);
+  border-radius:999px;
+  overflow:hidden;
+  background:rgba(0,0,0,.18);
+}
+.segment button{
+  appearance:none;
+  border:0;
+  background:transparent;
+  color:var(--muted);
+  font-size:12px;
+  letter-spacing:.10em;
+  text-transform:uppercase;
+  padding:8px 12px;
+  cursor:pointer;
+  user-select:none;
+}
+.segment button.active{
+  background:rgba(215,197,138,.18);
+  color:var(--cream);
+  box-shadow: inset 0 0 0 1px rgba(215,197,138,.30);
+}
+
 /* Table: Leaderboard */
 .table-head{
   display:grid;
   grid-template-columns: 64px 1fr 140px;
   padding:12px 16px;
-  background:linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,0));
   border-bottom:1px solid var(--line);
   font-size:12px;
   text-transform:uppercase;
@@ -148,11 +187,12 @@ body{
   text-overflow:ellipsis;
   white-space:nowrap;
 }
-.team .season{
+.team .subline{
   font-size:12px;
   color:var(--muted);
   letter-spacing:.02em;
 }
+
 .points{
   text-align:right;
   font-variant-numeric: tabular-nums;
@@ -243,6 +283,7 @@ body{
   .team .name{ font-size:15px; }
   .points{ font-size:17px; }
   .schedule-head, .schedule-row{ grid-template-columns: 120px 1fr; }
+  .controls{ flex-direction:column; align-items:flex-start; }
 }
 </style>
 </head>
@@ -264,12 +305,21 @@ body{
 
   <!-- LEADERBOARD -->
   <div class="card" aria-live="polite">
+    <div class="controls">
+      <div class="label" id="viewHint">View: Month (default)</div>
+      <div class="segment" role="tablist" aria-label="Leaderboard view">
+        <button id="btnMonth" class="active" type="button" role="tab" aria-selected="true">Month</button>
+        <button id="btnSeason" type="button" role="tab" aria-selected="false">Season</button>
+      </div>
+    </div>
+
     <div class="table-head">
       <div>Pos</div>
       <div>Team</div>
-      <div style="text-align:right;">This Month</div>
+      <div id="pointsHeader" style="text-align:right;">This Month</div>
     </div>
     <div id="rows"></div>
+
     <div class="status">
       <span class="pill"><span class="dot" id="dot"></span> <span id="statusText">Connecting…</span></span>
       <span id="hint">Edit monthly points in Sheets → site updates automatically</span>
@@ -296,13 +346,14 @@ body{
 <script>
   // ========= CONFIG =========
   const SHEET_ID = "1-Wo8A1lNGSMO6z85mLvxemk2CxP_tPihK9mEzTeesOA";
-  const POINTS_TAB_NAME = "Points";           // you said this is the tab name
-  const REFRESH_MS = 10000;                  // refresh rate
+  const POINTS_TAB_NAME = "Points";
+  const REFRESH_MS = 10000;
   // ==========================
 
-  // Pull CSV by sheet name (no gid needed)
   const POINTS_CSV_URL =
     `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(POINTS_TAB_NAME)}`;
+
+  const MONTHS = ["January","February","March","April","May","June"];
 
   const rowsEl = document.getElementById("rows");
   const lastUpdateEl = document.getElementById("lastUpdate");
@@ -311,9 +362,12 @@ body{
   const dotEl = document.getElementById("dot");
   const monthLabelEl = document.getElementById("monthLabel");
 
-  refreshRateEl.textContent = Math.round(REFRESH_MS/1000) + "s";
+  const btnMonth = document.getElementById("btnMonth");
+  const btnSeason = document.getElementById("btnSeason");
+  const viewHint = document.getElementById("viewHint");
+  const pointsHeader = document.getElementById("pointsHeader");
 
-  const MONTHS = ["January","February","March","April","May","June"];
+  refreshRateEl.textContent = Math.round(REFRESH_MS/1000) + "s";
 
   function setStatus(ok, text){
     statusTextEl.textContent = text;
@@ -330,7 +384,6 @@ body{
     const lines = csvText.trim().split(/\r?\n/);
     if (lines.length < 2) return { headers: [], rows: [] };
 
-    // Minimal CSV parser supporting quoted commas
     const parseLine = (line) => {
       const cells = [];
       let cur = "", inQuotes = false;
@@ -349,25 +402,23 @@ body{
     return { headers, rows };
   }
 
-  function getCurrentTourMonth(){
-    // Uses local time. If outside Jan–Jun, clamps to June to avoid empty board.
-    const now = new Date();
-    const m = now.getMonth(); // Jan=0 ... Dec=11
-    const idx = Math.min(Math.max(m, 0), 5); // clamp 0..5
-    return { index: idx, name: MONTHS[idx] };
-  }
-
   function toNumber(x){
     const n = Number(String(x ?? "").replace(/[^\d.-]/g,""));
     return Number.isFinite(n) ? n : 0;
   }
 
-  function computeGolfPositions(sorted){
+  function getCurrentTourMonth(){
+    // If outside Jan–Jun, clamp to June so board still works.
+    const idx = Math.min(Math.max(new Date().getMonth(), 0), 5);
+    return { index: idx, name: MONTHS[idx] };
+  }
+
+  function computeGolfPositions(sorted, keyFn){
     const labels = new Array(sorted.length);
     let i = 0;
     while (i < sorted.length){
       let j = i + 1;
-      while (j < sorted.length && sorted[j].monthPoints === sorted[i].monthPoints) j++;
+      while (j < sorted.length && keyFn(sorted[j]) === keyFn(sorted[i])) j++;
       const startPos = i + 1;
       const tiedCount = j - i;
       const label = (tiedCount > 1) ? ("T" + startPos) : String(startPos);
@@ -377,29 +428,89 @@ body{
     return labels;
   }
 
-  function render(teams, monthName){
+  function getUrlViewOverride(){
+    const v = new URLSearchParams(location.search).get("view");
+    if (!v) return null;
+    const lower = v.toLowerCase();
+    if (lower === "season") return "season";
+    if (lower === "month") return "month";
+    return null;
+  }
+
+  function getInitialView(){
+    // Priority: URL param -> localStorage -> default (Month)
+    const urlView = getUrlViewOverride();
+    if (urlView) return urlView;
+    const saved = localStorage.getItem("dragonTourView");
+    if (saved === "season" || saved === "month") return saved;
+    return "month";
+  }
+
+  let currentView = getInitialView();  // "month" | "season"
+  let lastTeams = [];                  // cached parsed data for re-render
+  let currentMonth = getCurrentTourMonth();
+
+  function setView(view){
+    currentView = view;
+    localStorage.setItem("dragonTourView", view);
+
+    const isMonth = view === "month";
+    btnMonth.classList.toggle("active", isMonth);
+    btnSeason.classList.toggle("active", !isMonth);
+    btnMonth.setAttribute("aria-selected", String(isMonth));
+    btnSeason.setAttribute("aria-selected", String(!isMonth));
+
+    viewHint.textContent = isMonth ? "View: Month" : "View: Season";
+    pointsHeader.textContent = isMonth ? "This Month" : "Season Total";
+
+    render(lastTeams);
+  }
+
+  btnMonth.addEventListener("click", () => setView("month"));
+  btnSeason.addEventListener("click", () => setView("season"));
+
+  function render(teams){
+    if (!teams || teams.length === 0) {
+      rowsEl.innerHTML = "";
+      return;
+    }
+
+    const monthName = currentMonth.name;
     monthLabelEl.textContent = `${monthName} standings • auto-refreshing`;
 
-    // Sort by this-month points, then season total, then name
-    teams.sort((a,b) =>
-      (b.monthPoints - a.monthPoints) ||
-      (b.seasonTotal - a.seasonTotal) ||
-      a.team.localeCompare(b.team)
-    );
+    const isMonth = currentView === "month";
 
-    const posLabels = computeGolfPositions(teams);
+    const sorted = [...teams].sort((a,b) => {
+      if (isMonth){
+        return (b.monthPoints - a.monthPoints) ||
+               (b.seasonTotal - a.seasonTotal) ||
+               a.team.localeCompare(b.team);
+      } else {
+        return (b.seasonTotal - a.seasonTotal) ||
+               (b.monthPoints - a.monthPoints) ||
+               a.team.localeCompare(b.team);
+      }
+    });
+
+    const keyFn = isMonth ? (t => t.monthPoints) : (t => t.seasonTotal);
+    const posLabels = computeGolfPositions(sorted, keyFn);
 
     rowsEl.innerHTML = "";
-    teams.forEach((t, idx) => {
+    sorted.forEach((t, idx) => {
+      const big = isMonth ? t.monthPoints : t.seasonTotal;
+      const sub = isMonth
+        ? `Season: ${t.seasonTotal} pts`
+        : `This month: ${t.monthPoints} pts`;
+
       const row = document.createElement("div");
       row.className = "row";
       row.innerHTML = `
         <div class="pos">${posLabels[idx]}</div>
         <div class="team">
           <div class="name" title="${escapeHtml(t.team)}">${escapeHtml(t.team)}</div>
-          <div class="season">Season: ${t.seasonTotal} pts</div>
+          <div class="subline">${escapeHtml(sub)}</div>
         </div>
-        <div class="points">${t.monthPoints}<span class="unit">pts</span></div>
+        <div class="points">${big}<span class="unit">pts</span></div>
       `;
       rowsEl.appendChild(row);
     });
@@ -408,8 +519,7 @@ body{
   async function load(){
     try{
       setStatus(true, "Live");
-
-      const { index: monthIdx, name: monthName } = getCurrentTourMonth();
+      currentMonth = getCurrentTourMonth();
 
       const res = await fetch(POINTS_CSV_URL + (POINTS_CSV_URL.includes("?") ? "&" : "?") + "t=" + Date.now());
       if (!res.ok) throw new Error("HTTP " + res.status);
@@ -417,13 +527,9 @@ body{
       const text = await res.text();
       const { headers, rows } = parseCSV(text);
 
-      // Expected headers: team, january, february, march, april, may, june
       const teamIdx = headers.indexOf("team");
-
-      const monthHeader = MONTHS[monthIdx].toLowerCase();
+      const monthHeader = currentMonth.name.toLowerCase();
       const monthColIdx = headers.indexOf(monthHeader);
-
-      // Season columns present in the sheet (case-insensitive)
       const monthColIdxs = MONTHS.map(m => headers.indexOf(m.toLowerCase()));
 
       if (teamIdx === -1 || monthColIdx === -1){
@@ -433,28 +539,20 @@ body{
         return;
       }
 
-      const teams = rows
-        .map(r => {
-          const team = (r[teamIdx] ?? "").trim();
-          if (!team) return null;
+      lastTeams = rows.map(r => {
+        const team = (r[teamIdx] ?? "").trim();
+        if (!team) return null;
 
-          const monthPoints = toNumber(r[monthColIdx]);
+        const monthPoints = toNumber(r[monthColIdx]);
+        let seasonTotal = 0;
+        for (const ci of monthColIdxs){
+          if (ci >= 0) seasonTotal += toNumber(r[ci]);
+        }
 
-          let seasonTotal = 0;
-          for (const ci of monthColIdxs){
-            if (ci >= 0) seasonTotal += toNumber(r[ci]);
-          }
+        return { team, monthPoints, seasonTotal };
+      }).filter(Boolean);
 
-          return {
-            team,
-            monthPoints,
-            seasonTotal
-          };
-        })
-        .filter(Boolean);
-
-      render(teams, monthName);
-
+      render(lastTeams);
       lastUpdateEl.textContent = new Date().toLocaleString();
       setStatus(true, "Live");
     }catch(err){
@@ -463,6 +561,8 @@ body{
     }
   }
 
+  // Initialize toggle state + first render
+  setView(currentView);
   load();
   setInterval(load, REFRESH_MS);
 </script>
