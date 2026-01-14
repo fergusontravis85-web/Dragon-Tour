@@ -7,12 +7,13 @@
 
 <style>
 :root{
-  --green:#0b3d2e;
-  --cream:#f3efe3;
-  --gold:#d7c58a;
+  --red:#b30018;
+  --red-dark:#5c000a;
+  --text:#f4f4f4;
   --muted:rgba(255,255,255,.7);
   --line:rgba(255,255,255,.15);
-  --card:rgba(10,47,36,.88);
+  --card:rgba(0,0,0,.80);
+  --accent:#ff2a2a;
 }
 
 *{box-sizing:border-box}
@@ -20,28 +21,44 @@
 body{
   margin:0;
   font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
-  color:var(--cream);
+  color:var(--text);
   min-height:100vh;
   background:#000;
+  overflow:hidden;
 }
 
-/* Background */
-.bg{
+/* ===== VIDEO BACKGROUND ===== */
+.video-bg{
   position:fixed;
   inset:0;
-  background:
-    linear-gradient(180deg, rgba(0,0,0,.65), rgba(0,0,0,.85)),
-    url("https://tpc.com/wp-content/uploads/2020/04/Sawgrass1_1920x1200.jpg");
-  background-size:cover;
-  background-position:center;
-  z-index:-1;
+  z-index:-3;
+  pointer-events:none;
 }
 
-/* Layout */
+.video-bg iframe{
+  width:100vw;
+  height:100vh;
+  border:0;
+  transform:scale(1.15);
+}
+
+/* Dark overlay */
+.video-overlay{
+  position:fixed;
+  inset:0;
+  z-index:-2;
+  background:
+    radial-gradient(900px 600px at 50% 15%, rgba(179,0,24,.35), transparent 60%),
+    linear-gradient(180deg, rgba(0,0,0,.55), rgba(0,0,0,.88));
+}
+
+/* ===== LAYOUT ===== */
 .wrap{
   max-width:900px;
   margin:auto;
-  padding:28px 16px 40px;
+  padding:28px 16px 60px;
+  position:relative;
+  z-index:1;
 }
 
 .header{
@@ -49,7 +66,7 @@ body{
   justify-content:space-between;
   align-items:flex-end;
   padding:18px;
-  background:linear-gradient(180deg, #0b3d2e, #08261d);
+  background:linear-gradient(180deg, var(--red), var(--red-dark));
   border-radius:14px;
   border:1px solid var(--line);
 }
@@ -57,9 +74,9 @@ body{
 .header h1{
   margin:0;
   font-size:16px;
-  letter-spacing:.12em;
+  letter-spacing:.14em;
   text-transform:uppercase;
-  font-weight:800;
+  font-weight:900;
 }
 
 .meta{
@@ -68,8 +85,8 @@ body{
   color:var(--muted);
 }
 
-/* Board */
-.board{
+/* ===== CARDS ===== */
+.card{
   margin-top:14px;
   background:var(--card);
   border-radius:14px;
@@ -77,16 +94,26 @@ body{
   overflow:hidden;
 }
 
-.board-head, .row{
+.card-title{
+  padding:14px 16px;
+  font-size:12px;
+  letter-spacing:.14em;
+  text-transform:uppercase;
+  color:var(--muted);
+  border-bottom:1px solid var(--line);
+}
+
+/* ===== TABLES ===== */
+.table-head, .row{
   display:grid;
   grid-template-columns:64px 1fr 140px;
   padding:14px 16px;
   align-items:center;
 }
 
-.board-head{
+.table-head{
   font-size:12px;
-  letter-spacing:.12em;
+  letter-spacing:.14em;
   text-transform:uppercase;
   color:var(--muted);
   border-bottom:1px solid var(--line);
@@ -100,7 +127,7 @@ body{
 
 .pos{
   font-weight:900;
-  color:var(--gold);
+  color:var(--accent);
 }
 
 .team{
@@ -120,9 +147,42 @@ body{
   font-size:12px;
   color:var(--muted);
   margin-left:6px;
-  letter-spacing:.12em;
+  letter-spacing:.14em;
 }
 
+/* ===== SCHEDULE TABLE ===== */
+.schedule-head, .schedule-row{
+  display:grid;
+  grid-template-columns:160px 1fr;
+  padding:14px 16px;
+  align-items:center;
+}
+
+.schedule-head{
+  font-size:12px;
+  letter-spacing:.14em;
+  text-transform:uppercase;
+  color:var(--muted);
+  border-bottom:1px solid var(--line);
+}
+
+.schedule-row{
+  border-bottom:1px solid var(--line);
+}
+
+.schedule-row:last-child{border-bottom:none}
+
+.month{
+  font-weight:900;
+  color:var(--accent);
+  letter-spacing:.06em;
+}
+
+.course{
+  font-weight:700;
+}
+
+/* ===== STATUS ===== */
 .status{
   padding:10px 16px;
   font-size:12px;
@@ -135,9 +195,20 @@ body{
 </head>
 
 <body>
-<div class="bg"></div>
+
+<!-- Video Background -->
+<div class="video-bg">
+  <iframe
+    src="https://jumpshare.com/embed/sjEuZqo480esyYUaTLFG?autoplay=1&mute=1&loop=1"
+    allow="autoplay; fullscreen"
+    allowfullscreen>
+  </iframe>
+</div>
+<div class="video-overlay"></div>
 
 <div class="wrap">
+
+  <!-- HEADER -->
   <div class="header">
     <h1>Dragon Tour Leaderboard</h1>
     <div class="meta">
@@ -146,8 +217,9 @@ body{
     </div>
   </div>
 
-  <div class="board">
-    <div class="board-head">
+  <!-- LEADERBOARD -->
+  <div class="card">
+    <div class="table-head">
       <div>Pos</div>
       <div>Team</div>
       <div style="text-align:right;">Points</div>
@@ -158,6 +230,42 @@ body{
       <span>Auto-refreshing</span>
     </div>
   </div>
+
+  <!-- SCHEDULE -->
+  <div class="card">
+    <div class="card-title">Season Schedule</div>
+
+    <div class="schedule-head">
+      <div>Month</div>
+      <div>Course</div>
+    </div>
+
+    <div class="schedule-row">
+      <div class="month">January</div>
+      <div class="course">Viera East</div>
+    </div>
+    <div class="schedule-row">
+      <div class="month">February</div>
+      <div class="course">Duran</div>
+    </div>
+    <div class="schedule-row">
+      <div class="month">March</div>
+      <div class="course">Royal St Cloud</div>
+    </div>
+    <div class="schedule-row">
+      <div class="month">April</div>
+      <div class="course">Duran Short Course</div>
+    </div>
+    <div class="schedule-row">
+      <div class="month">May</div>
+      <div class="course">Great Outdoors</div>
+    </div>
+    <div class="schedule-row">
+      <div class="month">June</div>
+      <div class="course">Manatee Cove</div>
+    </div>
+  </div>
+
 </div>
 
 <script>
@@ -221,5 +329,6 @@ async function load(){
 load();
 setInterval(load, REFRESH_MS);
 </script>
+
 </body>
 </html>
