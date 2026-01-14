@@ -95,7 +95,7 @@ body{
 }
 .meta strong{ color:var(--gold); font-weight:650; }
 
-/* Card (Leaderboard + Schedule) */
+/* Card */
 .card{
   margin-top:14px;
   background:var(--card);
@@ -126,6 +126,7 @@ body{
   align-items:center;
 }
 .row:last-child{ border-bottom:none; }
+
 .pos{
   font-variant-numeric: tabular-nums;
   color:var(--gold);
@@ -133,6 +134,12 @@ body{
   letter-spacing:.02em;
 }
 .team{
+  display:flex;
+  flex-direction:column;
+  gap:2px;
+  min-width:0;
+}
+.team .name{
   font-size:16px;
   font-weight:650;
   letter-spacing:.01em;
@@ -140,6 +147,11 @@ body{
   overflow:hidden;
   text-overflow:ellipsis;
   white-space:nowrap;
+}
+.team .season{
+  font-size:12px;
+  color:var(--muted);
+  letter-spacing:.02em;
 }
 .points{
   text-align:right;
@@ -157,6 +169,7 @@ body{
   letter-spacing:.10em;
   text-transform:uppercase;
 }
+
 .status{
   display:flex;
   gap:10px;
@@ -227,7 +240,7 @@ body{
 
 @media (max-width:520px){
   .table-head, .row{ grid-template-columns: 48px 1fr 110px; }
-  .team{ font-size:15px; }
+  .team .name{ font-size:15px; }
   .points{ font-size:17px; }
   .schedule-head, .schedule-row{ grid-template-columns: 120px 1fr; }
 }
@@ -241,7 +254,7 @@ body{
   <div class="header">
     <div class="title">
       <h1>Dragon Tour Leaderboard</h1>
-      <div class="sub">Live scoreboard • auto-refreshing</div>
+      <div class="sub" id="monthLabel">Live scoreboard • auto-refreshing</div>
     </div>
     <div class="meta">
       Last update: <strong id="lastUpdate">—</strong><br/>
@@ -254,12 +267,12 @@ body{
     <div class="table-head">
       <div>Pos</div>
       <div>Team</div>
-      <div style="text-align:right;">Points</div>
+      <div style="text-align:right;">This Month</div>
     </div>
     <div id="rows"></div>
     <div class="status">
       <span class="pill"><span class="dot" id="dot"></span> <span id="statusText">Connecting…</span></span>
-      <span id="hint">Edit scores in Google Sheets → site updates automatically</span>
+      <span id="hint">Edit monthly points in Sheets → site updates automatically</span>
     </div>
   </div>
 
@@ -281,32 +294,44 @@ body{
 </div>
 
 <script>
-  const SHEET_CSV_URL =
-    "https://docs.google.com/spreadsheets/d/1-Wo8A1lNGSMO6z85mLvxemk2CxP_tPihK9mEzTeesOA/export?format=csv&gid=0";
+  // ========= CONFIG =========
+  const SHEET_ID = "1-Wo8A1lNGSMO6z85mLvxemk2CxP_tPihK9mEzTeesOA";
+  const POINTS_TAB_NAME = "Points";           // you said this is the tab name
+  const REFRESH_MS = 10000;                  // refresh rate
+  // ==========================
 
-  const REFRESH_MS = 10000;
+  // Pull CSV by sheet name (no gid needed)
+  const POINTS_CSV_URL =
+    `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(POINTS_TAB_NAME)}`;
 
   const rowsEl = document.getElementById("rows");
   const lastUpdateEl = document.getElementById("lastUpdate");
   const refreshRateEl = document.getElementById("refreshRate");
   const statusTextEl = document.getElementById("statusText");
   const dotEl = document.getElementById("dot");
+  const monthLabelEl = document.getElementById("monthLabel");
 
   refreshRateEl.textContent = Math.round(REFRESH_MS/1000) + "s";
+
+  const MONTHS = ["January","February","March","April","May","June"];
 
   function setStatus(ok, text){
     statusTextEl.textContent = text;
     dotEl.classList.toggle("bad", !ok);
   }
 
+  function escapeHtml(str){
+    return String(str).replace(/[&<>"']/g, s => ({
+      "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"
+    })[s]);
+  }
+
   function parseCSV(csvText){
     const lines = csvText.trim().split(/\r?\n/);
-    if (lines.length < 2) return [];
-    const headers = lines[0].split(",").map(h => h.trim().toLowerCase());
-    const teamIdx = headers.indexOf("team");
-    const pointsIdx = headers.indexOf("points");
+    if (lines.length < 2) return { headers: [], rows: [] };
 
-    return lines.slice(1).map(line => {
+    // Minimal CSV parser supporting quoted commas
+    const parseLine = (line) => {
       const cells = [];
       let cur = "", inQuotes = false;
       for (let i=0;i<line.length;i++){
@@ -316,14 +341,25 @@ body{
         else cur += ch;
       }
       cells.push(cur);
+      return cells.map(c => c.replace(/^"|"$/g,"").trim());
+    };
 
-      const team = (cells[teamIdx] ?? "").replace(/^"|"$/g,"").trim();
-      const pointsRaw = (cells[pointsIdx] ?? "").replace(/^"|"$/g,"").trim();
-      const points = Number(pointsRaw);
+    const headers = parseLine(lines[0]).map(h => h.toLowerCase());
+    const rows = lines.slice(1).map(parseLine);
+    return { headers, rows };
+  }
 
-      if (!team) return null;
-      return { team, points: Number.isFinite(points) ? points : 0 };
-    }).filter(Boolean);
+  function getCurrentTourMonth(){
+    // Uses local time. If outside Jan–Jun, clamps to June to avoid empty board.
+    const now = new Date();
+    const m = now.getMonth(); // Jan=0 ... Dec=11
+    const idx = Math.min(Math.max(m, 0), 5); // clamp 0..5
+    return { index: idx, name: MONTHS[idx] };
+  }
+
+  function toNumber(x){
+    const n = Number(String(x ?? "").replace(/[^\d.-]/g,""));
+    return Number.isFinite(n) ? n : 0;
   }
 
   function computeGolfPositions(sorted){
@@ -331,7 +367,7 @@ body{
     let i = 0;
     while (i < sorted.length){
       let j = i + 1;
-      while (j < sorted.length && sorted[j].points === sorted[i].points) j++;
+      while (j < sorted.length && sorted[j].monthPoints === sorted[i].monthPoints) j++;
       const startPos = i + 1;
       const tiedCount = j - i;
       const label = (tiedCount > 1) ? ("T" + startPos) : String(startPos);
@@ -341,18 +377,29 @@ body{
     return labels;
   }
 
-  function render(data){
-    data.sort((a,b) => (b.points - a.points) || a.team.localeCompare(b.team));
-    const posLabels = computeGolfPositions(data);
+  function render(teams, monthName){
+    monthLabelEl.textContent = `${monthName} standings • auto-refreshing`;
+
+    // Sort by this-month points, then season total, then name
+    teams.sort((a,b) =>
+      (b.monthPoints - a.monthPoints) ||
+      (b.seasonTotal - a.seasonTotal) ||
+      a.team.localeCompare(b.team)
+    );
+
+    const posLabels = computeGolfPositions(teams);
 
     rowsEl.innerHTML = "";
-    data.forEach((item, idx) => {
+    teams.forEach((t, idx) => {
       const row = document.createElement("div");
       row.className = "row";
       row.innerHTML = `
         <div class="pos">${posLabels[idx]}</div>
-        <div class="team" title="${item.team.replace(/"/g,'&quot;')}">${item.team}</div>
-        <div class="points">${item.points}<span class="unit">pts</span></div>
+        <div class="team">
+          <div class="name" title="${escapeHtml(t.team)}">${escapeHtml(t.team)}</div>
+          <div class="season">Season: ${t.seasonTotal} pts</div>
+        </div>
+        <div class="points">${t.monthPoints}<span class="unit">pts</span></div>
       `;
       rowsEl.appendChild(row);
     });
@@ -361,12 +408,53 @@ body{
   async function load(){
     try{
       setStatus(true, "Live");
-      const url = SHEET_CSV_URL + (SHEET_CSV_URL.includes("?") ? "&" : "?") + "t=" + Date.now();
-      const res = await fetch(url);
+
+      const { index: monthIdx, name: monthName } = getCurrentTourMonth();
+
+      const res = await fetch(POINTS_CSV_URL + (POINTS_CSV_URL.includes("?") ? "&" : "?") + "t=" + Date.now());
       if (!res.ok) throw new Error("HTTP " + res.status);
+
       const text = await res.text();
-      const data = parseCSV(text);
-      render(data);
+      const { headers, rows } = parseCSV(text);
+
+      // Expected headers: team, january, february, march, april, may, june
+      const teamIdx = headers.indexOf("team");
+
+      const monthHeader = MONTHS[monthIdx].toLowerCase();
+      const monthColIdx = headers.indexOf(monthHeader);
+
+      // Season columns present in the sheet (case-insensitive)
+      const monthColIdxs = MONTHS.map(m => headers.indexOf(m.toLowerCase()));
+
+      if (teamIdx === -1 || monthColIdx === -1){
+        setStatus(false, "Missing required columns (team + month headers)");
+        rowsEl.innerHTML = "";
+        lastUpdateEl.textContent = new Date().toLocaleString();
+        return;
+      }
+
+      const teams = rows
+        .map(r => {
+          const team = (r[teamIdx] ?? "").trim();
+          if (!team) return null;
+
+          const monthPoints = toNumber(r[monthColIdx]);
+
+          let seasonTotal = 0;
+          for (const ci of monthColIdxs){
+            if (ci >= 0) seasonTotal += toNumber(r[ci]);
+          }
+
+          return {
+            team,
+            monthPoints,
+            seasonTotal
+          };
+        })
+        .filter(Boolean);
+
+      render(teams, monthName);
+
       lastUpdateEl.textContent = new Date().toLocaleString();
       setStatus(true, "Live");
     }catch(err){
