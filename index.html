@@ -16,21 +16,13 @@
   --card:rgba(10,47,36,.82);
 }
 *{box-sizing:border-box}
-body{
-  margin:0;
-  font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;
-  color:var(--text);
-  background:#000;
-  min-height:100vh;
-}
+body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;color:var(--text);background:#000;min-height:100vh;}
 .bg{
   position:fixed; inset:0;
   background:
     linear-gradient(180deg, rgba(0,0,0,.55), rgba(0,0,0,.78)),
     url("https://tpc.com/wp-content/uploads/2020/04/Sawgrass1_1920x1200.jpg");
-  background-size:cover;
-  background-position:center;
-  z-index:-1;
+  background-size:cover;background-position:center;z-index:-1;
 }
 .wrap{max-width:920px;margin:0 auto;padding:28px 16px 50px;}
 
@@ -39,81 +31,33 @@ body{
   padding:18px;border-radius:14px;
   background:linear-gradient(180deg, rgba(11,61,46,.92), rgba(10,47,36,.86));
 }
-.title h1{
-  margin:0;font-size:16px;letter-spacing:.08em;
-  text-transform:uppercase;color:var(--cream);
-}
+.title h1{margin:0;font-size:16px;letter-spacing:.08em;text-transform:uppercase;color:var(--cream);}
 .title .sub{font-size:12px;color:var(--muted);}
 .meta{font-size:12px;color:var(--muted);text-align:right;}
 .meta strong{color:var(--gold);}
 
-.card{
-  margin-top:14px;
-  background:var(--card);
-  border-radius:14px;
-  overflow:hidden;
-}
+.card{margin-top:14px;background:var(--card);border-radius:14px;overflow:hidden;}
 
-.controls{
-  display:flex;justify-content:space-between;align-items:center;
-  padding:12px 16px;border-bottom:1px solid var(--line);
-}
-.segment button{
-  background:none;border:0;color:var(--muted);
-  padding:6px 12px;cursor:pointer;font-size:12px;
-}
-.segment button.active{
-  background:rgba(215,197,138,.2);
-  color:var(--cream);
-  border-radius:999px;
-}
+.controls{display:flex;justify-content:space-between;align-items:center;padding:12px 16px;border-bottom:1px solid var(--line);}
+.segment button{background:none;border:0;color:var(--muted);padding:6px 12px;cursor:pointer;font-size:12px;}
+.segment button.active{background:rgba(215,197,138,.2);color:var(--cream);border-radius:999px;}
 
-.table-head,.row{
-  display:grid;
-  grid-template-columns:64px 1fr 160px;
-  padding:14px 16px;
-  align-items:center;
-}
-.table-head{
-  font-size:12px;
-  color:var(--muted);
-  border-bottom:1px solid var(--line);
-}
+.table-head,.row{display:grid;grid-template-columns:64px 1fr 160px;padding:14px 16px;align-items:center;}
+.table-head{font-size:12px;color:var(--muted);border-bottom:1px solid var(--line);}
 .row{border-bottom:1px solid var(--line);}
 .pos{color:var(--gold);font-weight:800;}
 .team .name{font-weight:650;}
 .team .subline{font-size:12px;color:var(--muted);}
 .value{text-align:right;font-size:18px;font-weight:850;}
 
-.status{
-  padding:10px 16px;font-size:12px;color:var(--muted);
-}
-.pill{
-  display:inline-flex;align-items:center;gap:8px;
-  padding:6px 10px;border-radius:999px;
-  border:1px solid rgba(255,255,255,.15);
-}
+.status{padding:10px 16px;font-size:12px;color:var(--muted);}
+.pill{display:inline-flex;align-items:center;gap:8px;padding:6px 10px;border-radius:999px;border:1px solid rgba(255,255,255,.15);}
 .dot{width:8px;height:8px;border-radius:50%;background:#7CFC98;}
 .dot.sync{background:#ffd166;}
 
-.card-title{
-  padding:12px 16px;
-  border-bottom:1px solid var(--line);
-  font-size:12px;
-  text-transform:uppercase;
-  letter-spacing:.08em;
-  color:var(--muted);
-}
-.schedule-head,.schedule-row{
-  display:grid;
-  grid-template-columns:160px 1fr;
-  padding:14px 16px;
-}
-.schedule-head{
-  font-size:12px;
-  color:var(--muted);
-  border-bottom:1px solid var(--line);
-}
+.card-title{padding:12px 16px;border-bottom:1px solid var(--line);font-size:12px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);}
+.schedule-head,.schedule-row{display:grid;grid-template-columns:160px 1fr;padding:14px 16px;}
+.schedule-head{font-size:12px;color:var(--muted);border-bottom:1px solid var(--line);}
 .schedule-row{border-bottom:1px solid var(--line);}
 .schedule-row:last-child{border-bottom:none;}
 .month{font-weight:800;color:var(--gold);}
@@ -197,54 +141,72 @@ let lastGoodTeams=[];
 
 const norm=s=>String(s||"").trim().toLowerCase();
 
-/* Robust CSV parser */
-function parseCSV(text){
-  const rows=[],row=[];
-  let cur="",q=false;
-  text=String(text).replace(/\uFEFF/g,"").replace(/\r/g,"");
-  for(let i=0;i<text.length;i++){
-    const c=text[i],n=text[i+1];
-    if(c=='"'){ if(q&&n=='"'){cur+='"';i++} else q=!q; }
-    else if(c==','&&!q){ row.push(cur); cur=""; }
-    else if(c=='\n'&&!q){ row.push(cur); rows.push(row.splice(0)); cur=""; }
-    else cur+=c;
+/* ✅ Clean a CSV cell: remove surrounding quotes + unescape "" */
+function cleanCell(x){
+  let s = String(x ?? "").trim();
+  if (s.startsWith('"') && s.endsWith('"')) {
+    s = s.slice(1,-1).replace(/""/g, '"');
   }
-  row.push(cur); rows.push(row);
-  return {headers:rows[0].map(h=>h.trim().toLowerCase()),rows:rows.slice(1)};
+  return s.trim();
 }
 
-/* Helpers */
-function num(x){
-  const n=Number(String(x??"").replace(/,/g,"").trim());
+/* Robust CSV parser + cell cleaning */
+function parseCSV(text){
+  const rows=[], row=[];
+  let cur="", q=false;
+  text=String(text).replace(/\uFEFF/g,"").replace(/\r/g,"");
+  for(let i=0;i<text.length;i++){
+    const c=text[i], n=text[i+1];
+    if(c=='"'){
+      if(q && n=='"'){cur+='"'; i++;}
+      else q=!q;
+    } else if(c==',' && !q){
+      row.push(cur); cur="";
+    } else if(c=='\n' && !q){
+      row.push(cur);
+      rows.push(row.splice(0));
+      cur="";
+    } else {
+      cur+=c;
+    }
+  }
+  row.push(cur); rows.push(row);
+
+  const headers = (rows[0]||[]).map(h=>cleanCell(h).toLowerCase());
+  const data = rows.slice(1).map(r=>r.map(cleanCell));
+  return { headers, rows: data };
+}
+
+function numLoose(x){
+  const s=cleanCell(x).replace(/,/g,"").replace(/^\+/,"").trim();
+  if(!s) return null;
+  const n=Number(s);
   return Number.isFinite(n)?n:null;
 }
 
-/* ✅ Monthly score:
-   - Blank => — 
-   - E/e => E
-   - 0 / 0.0 / -0 => E
-   - +2 / -2 / 2 => +2 / -2
-*/
+/* ✅ Monthly golf parsing (NOW works with quoted CSV like "E") */
 function parseGolf(raw){
-  const s=String(raw??"").trim();
-  if(!s) return {v: Number.POSITIVE_INFINITY, d:"—"};  // no score yet
-  if(s.toLowerCase()==="e") return {v:0,d:"E"};
-  const n=num(s.replace("+",""));
+  const s = cleanCell(raw);
+  if(!s) return {v:Number.POSITIVE_INFINITY, d:"—"};
+  if(s.toLowerCase()==="e") return {v:0, d:"E"};
+  if (/^[+-]?0+(\.0+)?$/.test(s)) return {v:0, d:"E"};
+
+  const n = numLoose(s);
   if(n===null) return {v:Number.POSITIVE_INFINITY, d:"—"};
-  if(Object.is(n, -0) || n===0) return {v:0,d:"E"};
+  if(Object.is(n,-0) || n===0) return {v:0, d:"E"};
   return {v:n, d:n>0?`+${n}`:`${n}`};
 }
 
-/* ✅ Ties => T# (Masters style) */
+/* Ties => T# */
 function applyTiePositions(sorted, keyFn){
-  const posLabels = new Array(sorted.length);
+  const posLabels=new Array(sorted.length);
   let i=0;
   while(i<sorted.length){
     let j=i+1;
-    const key = keyFn(sorted[i]);
+    const key=keyFn(sorted[i]);
     while(j<sorted.length && keyFn(sorted[j])===key) j++;
-    const pos = i+1;
-    const label = (j-i>1) ? `T${pos}` : `${pos}`;
+    const pos=i+1;
+    const label=(j-i>1)?`T${pos}`:`${pos}`;
     for(let k=i;k<j;k++) posLabels[k]=label;
     i=j;
   }
@@ -257,20 +219,15 @@ function currentMonth(){
 
 function render(){
   rowsEl.innerHTML="";
-
-  // Sort per view
   const sorted=[...teams];
+
   if(currentView==="month"){
     sorted.sort((a,b)=> (a.month.v-b.month.v) || (b.season-a.season) || a.team.localeCompare(b.team));
-  }else{
+  } else {
     sorted.sort((a,b)=> (b.season-a.season) || (a.month.v-b.month.v) || a.team.localeCompare(b.team));
   }
 
-  // Positions with ties
-  const keyFn = currentView==="month"
-    ? (t)=>t.month.v
-    : (t)=>t.season;
-
+  const keyFn = currentView==="month" ? (t)=>t.month.v : (t)=>t.season;
   const posLabels = applyTiePositions(sorted, keyFn);
 
   sorted.forEach((t,idx)=>{
@@ -296,8 +253,8 @@ async function load(){
     const m=currentMonth().toLowerCase();
 
     const [a,b]=await Promise.all([
-      fetch(`https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${TAB_MONTHLY}`).then(r=>r.text()),
-      fetch(`https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${TAB_SEASON}`).then(r=>r.text())
+      fetch(`https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(TAB_MONTHLY)}`).then(r=>r.text()),
+      fetch(`https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(TAB_SEASON)}`).then(r=>r.text())
     ]);
 
     const A=parseCSV(a), B=parseCSV(b);
@@ -312,7 +269,7 @@ async function load(){
       if(!team) return;
       let total=0;
       for(let i=1;i<r.length;i++){
-        const n=num(r[i]);
+        const n=numLoose(r[i]);
         total += (n===null ? 0 : n);
       }
       seasonMap.set(norm(team), total);
@@ -322,7 +279,7 @@ async function load(){
       const team=r[ti];
       if(!team) return null;
       return {
-        team,
+        team: cleanCell(team),
         month: parseGolf(r[mi]),
         season: seasonMap.get(norm(team)) ?? 0
       };
