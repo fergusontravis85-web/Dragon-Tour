@@ -6,39 +6,172 @@
 <title>Dragon Tour Leaderboard</title>
 
 <style>
-body{margin:0;font-family:system-ui;background:#000;color:#eee}
-.bg{position:fixed;inset:0;background:
-linear-gradient(180deg,rgba(0,0,0,.55),rgba(0,0,0,.78)),
-url("https://tpc.com/wp-content/uploads/2020/04/Sawgrass1_1920x1200.jpg");
-background-size:cover;background-position:center;z-index:-1}
-.wrap{max-width:900px;margin:0 auto;padding:24px}
-.card{background:rgba(10,47,36,.85);border-radius:14px;overflow:hidden}
-.table-head,.row{display:grid;grid-template-columns:60px 1fr 120px;padding:12px}
-.table-head{border-bottom:1px solid rgba(255,255,255,.15);font-size:12px;color:#ccc}
-.row{border-bottom:1px solid rgba(255,255,255,.1)}
-.pos{color:#d7c58a;font-weight:800}
-.value{text-align:right;font-weight:800}
-.status{padding:10px;font-size:12px;color:#ccc}
-.dot{width:8px;height:8px;border-radius:50%;display:inline-block;margin-right:6px}
-.dot.live{background:#7CFC98}
-.dot.sync{background:#ffd166}
+:root{
+  --green:#0b3d2e;
+  --cream:#f3efe3;
+  --line:rgba(255,255,255,.16);
+  --text:rgba(255,255,255,.92);
+  --muted:rgba(255,255,255,.70);
+  --gold:#d7c58a;
+  --card:rgba(10,47,36,.82);
+}
+*{box-sizing:border-box}
+body{
+  margin:0;
+  font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;
+  color:var(--text);
+  background:#000;
+  min-height:100vh;
+}
+.bg{
+  position:fixed; inset:0;
+  background:
+    linear-gradient(180deg, rgba(0,0,0,.55), rgba(0,0,0,.78)),
+    url("https://tpc.com/wp-content/uploads/2020/04/Sawgrass1_1920x1200.jpg");
+  background-size:cover;
+  background-position:center;
+  z-index:-1;
+}
+.wrap{max-width:920px;margin:0 auto;padding:28px 16px 50px;}
+
+.header{
+  display:flex;justify-content:space-between;gap:16px;
+  padding:18px;border-radius:14px;
+  background:linear-gradient(180deg, rgba(11,61,46,.92), rgba(10,47,36,.86));
+}
+.title h1{
+  margin:0;font-size:16px;letter-spacing:.08em;
+  text-transform:uppercase;color:var(--cream);
+}
+.title .sub{font-size:12px;color:var(--muted);}
+.meta{font-size:12px;color:var(--muted);text-align:right;}
+.meta strong{color:var(--gold);}
+
+.card{
+  margin-top:14px;
+  background:var(--card);
+  border-radius:14px;
+  overflow:hidden;
+}
+
+.controls{
+  display:flex;justify-content:space-between;align-items:center;
+  padding:12px 16px;border-bottom:1px solid var(--line);
+}
+.segment button{
+  background:none;border:0;color:var(--muted);
+  padding:6px 12px;cursor:pointer;font-size:12px;
+}
+.segment button.active{
+  background:rgba(215,197,138,.2);
+  color:var(--cream);
+  border-radius:999px;
+}
+
+.table-head,.row{
+  display:grid;
+  grid-template-columns:64px 1fr 160px;
+  padding:14px 16px;
+  align-items:center;
+}
+.table-head{
+  font-size:12px;
+  color:var(--muted);
+  border-bottom:1px solid var(--line);
+}
+.row{border-bottom:1px solid var(--line);}
+.pos{color:var(--gold);font-weight:800;}
+.team .name{font-weight:650;}
+.team .subline{font-size:12px;color:var(--muted);}
+.value{text-align:right;font-size:18px;font-weight:850;}
+
+.status{
+  padding:10px 16px;font-size:12px;color:var(--muted);
+}
+.pill{
+  display:inline-flex;align-items:center;gap:8px;
+  padding:6px 10px;border-radius:999px;
+  border:1px solid rgba(255,255,255,.15);
+}
+.dot{width:8px;height:8px;border-radius:50%;background:#7CFC98;}
+.dot.sync{background:#ffd166;}
+
+.card-title{
+  padding:12px 16px;
+  border-bottom:1px solid var(--line);
+  font-size:12px;
+  text-transform:uppercase;
+  letter-spacing:.08em;
+  color:var(--muted);
+}
+
+.schedule-head,.schedule-row{
+  display:grid;
+  grid-template-columns:160px 1fr;
+  padding:14px 16px;
+}
+.schedule-head{
+  font-size:12px;
+  color:var(--muted);
+  border-bottom:1px solid var(--line);
+}
+.schedule-row{border-bottom:1px solid var(--line);}
+.schedule-row:last-child{border-bottom:none;}
+.month{font-weight:800;color:var(--gold);}
+.course{font-weight:650;color:var(--cream);}
 </style>
 </head>
 
 <body>
 <div class="bg"></div>
-<div class="wrap">
-  <h2>Dragon Tour Leaderboard</h2>
 
+<div class="wrap">
+  <div class="header">
+    <div class="title">
+      <h1>Dragon Tour Leaderboard</h1>
+      <div class="sub" id="subHeader">Loading…</div>
+    </div>
+    <div class="meta">
+      Last update:<br><strong id="lastUpdate">—</strong>
+    </div>
+  </div>
+
+  <!-- LEADERBOARD -->
   <div class="card">
+    <div class="controls">
+      <div id="viewHint">View: Month</div>
+      <div class="segment">
+        <button id="btnMonth" class="active">Month</button>
+        <button id="btnSeason">Season</button>
+      </div>
+    </div>
+
     <div class="table-head">
-      <div>Pos</div><div>Team</div><div>This Month</div>
+      <div>Pos</div>
+      <div>Team</div>
+      <div id="valHead">This Month</div>
     </div>
+
     <div id="rows"></div>
+
     <div class="status">
-      <span class="dot sync" id="dot"></span>
-      <span id="status">Syncing…</span>
+      <span class="pill">
+        <span class="dot" id="dot"></span>
+        <span id="statusText">Syncing…</span>
+      </span>
     </div>
+  </div>
+
+  <!-- SCHEDULE -->
+  <div class="card">
+    <div class="card-title">Season Schedule</div>
+    <div class="schedule-head"><div>Month</div><div>Location</div></div>
+    <div class="schedule-row"><div class="month">January</div><div class="course">Viera East</div></div>
+    <div class="schedule-row"><div class="month">February</div><div class="course">Duran</div></div>
+    <div class="schedule-row"><div class="month">March</div><div class="course">Royal St Cloud</div></div>
+    <div class="schedule-row"><div class="month">April</div><div class="course">Duran Short Course</div></div>
+    <div class="schedule-row"><div class="month">May</div><div class="course">Great Outdoors</div></div>
+    <div class="schedule-row"><div class="month">June</div><div class="course">Manatee Cove</div></div>
   </div>
 </div>
 
@@ -50,19 +183,27 @@ const MONTHS=["January","February","March","April","May","June"];
 const REFRESH=10000;
 
 const rowsEl=document.getElementById("rows");
-const statusEl=document.getElementById("status");
+const statusText=document.getElementById("statusText");
 const dot=document.getElementById("dot");
+const subHeader=document.getElementById("subHeader");
+const lastUpdate=document.getElementById("lastUpdate");
+const btnMonth=document.getElementById("btnMonth");
+const btnSeason=document.getElementById("btnSeason");
+const valHead=document.getElementById("valHead");
+const viewHint=document.getElementById("viewHint");
 
-let lastGood=[];
+let currentView="month";
+let teams=[];
+let lastGoodTeams=[];
 
-const norm = s => String(s||"").trim().toLowerCase();
+const norm=s=>String(s||"").trim().toLowerCase();
 
-function parseCSV(t){
+function parseCSV(text){
   const rows=[],row=[];
   let cur="",q=false;
-  t=String(t).replace(/\uFEFF/g,"").replace(/\r/g,"");
-  for(let i=0;i<t.length;i++){
-    const c=t[i],n=t[i+1];
+  text=String(text).replace(/\uFEFF/g,"").replace(/\r/g,"");
+  for(let i=0;i<text.length;i++){
+    const c=text[i],n=text[i+1];
     if(c=='"'){ if(q&&n=='"'){cur+='"';i++} else q=!q; }
     else if(c==','&&!q){ row.push(cur); cur=""; }
     else if(c=='\n'&&!q){ row.push(cur); rows.push(row.splice(0)); cur=""; }
@@ -78,10 +219,33 @@ function parseGolf(v){
   const n=Number(v); return {v:n,d:n>0?`+${n}`:`${n}`};
 }
 
+function currentMonth(){
+  return MONTHS[Math.min(new Date().getMonth(),5)];
+}
+
+function render(){
+  rowsEl.innerHTML="";
+  teams.forEach((t,i)=>{
+    rowsEl.innerHTML+=`
+      <div class="row">
+        <div class="pos">${i+1}</div>
+        <div class="team">
+          <div class="name">${t.team}</div>
+          <div class="subline">
+            ${currentView==="month" ? `Season: ${t.season} pts` : `This month: ${t.month.d}`}
+          </div>
+        </div>
+        <div class="value">
+          ${currentView==="month" ? t.month.d : t.season}
+        </div>
+      </div>`;
+  });
+}
+
 async function load(){
   try{
-    dot.className="dot sync"; statusEl.textContent="Syncing…";
-    const m=MONTHS[Math.min(new Date().getMonth(),5)].toLowerCase();
+    dot.className="dot sync"; statusText.textContent="Syncing…";
+    const m=currentMonth().toLowerCase();
 
     const [a,b]=await Promise.all([
       fetch(`https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${TAB_MONTHLY}`).then(r=>r.text()),
@@ -106,33 +270,49 @@ async function load(){
         team,
         key:norm(team),
         month:parseGolf(r[mi]),
-        season:seasonMap.get(norm(team)) ?? 0
+        season:seasonMap.get(norm(team))||0
       };
     }).filter(Boolean);
 
     if(out.length){
-      out.sort((a,b)=>a.month.v-b.month.v);
-      lastGood=out;
+      out.sort((a,b)=>
+        currentView==="month"
+          ? a.month.v-b.month.v
+          : b.season-a.season
+      );
+      teams=out;
+      lastGoodTeams=out;
+    } else {
+      teams=lastGoodTeams;
     }
 
-    const data=out.length?out:lastGood;
-    rowsEl.innerHTML="";
-    data.forEach((t,i)=>{
-      rowsEl.innerHTML+=`
-        <div class="row">
-          <div class="pos">${i+1}</div>
-          <div>${t.team}</div>
-          <div class="value">${t.month.d}</div>
-        </div>`;
-    });
-
-    dot.className="dot live"; statusEl.textContent="Live";
+    render();
+    dot.className="dot"; statusText.textContent="Live";
+    lastUpdate.textContent=new Date().toLocaleString();
+    subHeader.textContent=`${currentMonth()} • ${currentView==="month"?"Golf scores":"Points standings"}`;
   }catch{
-    if(lastGood.length){
-      dot.className="dot sync"; statusEl.textContent="Syncing…";
-    }
+    teams=lastGoodTeams;
+    render();
+    dot.className="dot sync"; statusText.textContent="Syncing…";
   }
 }
+
+btnMonth.onclick=()=>{
+  currentView="month";
+  btnMonth.classList.add("active");
+  btnSeason.classList.remove("active");
+  valHead.textContent="This Month";
+  viewHint.textContent="View: Month";
+  load();
+};
+btnSeason.onclick=()=>{
+  currentView="season";
+  btnSeason.classList.add("active");
+  btnMonth.classList.remove("active");
+  valHead.textContent="Season Total";
+  viewHint.textContent="View: Season";
+  load();
+};
 
 load();
 setInterval(load,REFRESH);
