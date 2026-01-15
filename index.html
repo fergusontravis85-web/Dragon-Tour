@@ -1,303 +1,100 @@
 <!doctype html>
-<html lang="en">
+<html>
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Dragon Tour Leaderboard</title>
-
+<meta charset="utf-8">
+<title>Dragon Tour DEBUG</title>
 <style>
-:root{
-  --green:#0b3d2e;
-  --cream:#f3efe3;
-  --line:rgba(255,255,255,.16);
-  --text:rgba(255,255,255,.92);
-  --muted:rgba(255,255,255,.70);
-  --gold:#d7c58a;
-  --card:rgba(10,47,36,.82);
-}
-*{box-sizing:border-box}
-body{
-  margin:0;
-  font-family: system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;
-  color:var(--text);
-  min-height:100vh;
-  background:#000;
-}
-.bg{
-  position:fixed; inset:0;
-  background:
-    linear-gradient(180deg, rgba(0,0,0,.55), rgba(0,0,0,.78)),
-    url("https://tpc.com/wp-content/uploads/2020/04/Sawgrass1_1920x1200.jpg");
-  background-size:cover;
-  background-position:center;
-  z-index:-1;
-}
-.wrap{max-width:920px;margin:0 auto;padding:28px 16px 50px;}
-
-.header{
-  display:flex;justify-content:space-between;gap:16px;
-  padding:18px;border-radius:14px;
-  background:linear-gradient(180deg, rgba(11,61,46,.92), rgba(10,47,36,.86));
-}
-.title h1{
-  margin:0;font-size:16px;letter-spacing:.08em;
-  text-transform:uppercase;color:var(--cream);
-}
-.title .sub{font-size:12px;color:var(--muted);}
-.meta{font-size:12px;color:var(--muted);text-align:right;}
-.meta strong{color:var(--gold);}
-
-.card{
-  margin-top:14px;background:var(--card);
-  border-radius:14px;overflow:hidden;
-}
-.controls{
-  display:flex;justify-content:space-between;align-items:center;
-  padding:12px 16px;border-bottom:1px solid var(--line);
-}
-.segment button{
-  background:none;border:0;color:var(--muted);
-  padding:6px 12px;cursor:pointer;
-}
-.segment button.active{
-  background:rgba(215,197,138,.2);
-  color:var(--cream);
-}
-.table-head,.row{
-  display:grid;grid-template-columns:64px 1fr 160px;
-  padding:14px 16px;align-items:center;
-}
-.table-head{
-  font-size:12px;color:var(--muted);
-  border-bottom:1px solid var(--line);
-}
-.row{border-bottom:1px solid var(--line);}
-.pos{color:var(--gold);font-weight:800;}
-.team .name{font-weight:650;}
-.team .subline{font-size:12px;color:var(--muted);}
-.value{text-align:right;font-size:18px;font-weight:850;}
-
-.status{
-  padding:10px 16px;font-size:12px;color:var(--muted);
-}
-.pill{
-  display:inline-flex;align-items:center;gap:8px;
-  padding:6px 10px;border-radius:999px;
-  border:1px solid rgba(255,255,255,.15);
-}
-.dot{width:8px;height:8px;border-radius:50%;background:#7CFC98;}
-.dot.sync{background:#ffd166;}
-.dot.bad{background:#ff6b6b;}
+body{background:#111;color:#eee;font-family:system-ui;padding:20px}
+pre{background:#000;padding:12px;border-radius:8px;overflow:auto}
+.ok{color:#7CFC98}
+.bad{color:#ff6b6b}
 </style>
 </head>
-
 <body>
-<div class="bg"></div>
 
-<div class="wrap">
-  <div class="header">
-    <div class="title">
-      <h1>Dragon Tour Leaderboard</h1>
-      <div class="sub" id="subHeader">Loading…</div>
-    </div>
-    <div class="meta">
-      Last update: <strong id="lastUpdate">—</strong>
-    </div>
-  </div>
+<h1>Dragon Tour – Debug Mode</h1>
+<div id="status">Starting…</div>
 
-  <div class="card">
-    <div class="controls">
-      <div id="viewHint">View: Month</div>
-      <div class="segment">
-        <button id="btnMonth" class="active">Month</button>
-        <button id="btnSeason">Season</button>
-      </div>
-    </div>
+<h3>MonthlyScores CSV (first 500 chars)</h3>
+<pre id="csvA"></pre>
 
-    <div class="table-head">
-      <div>Pos</div><div>Team</div><div id="valHead">This Month</div>
-    </div>
-    <div id="rows"></div>
+<h3>SeasonPoints CSV (first 500 chars)</h3>
+<pre id="csvB"></pre>
 
-    <div class="status">
-      <span class="pill">
-        <span class="dot" id="dot"></span>
-        <span id="statusText">Connecting…</span>
-      </span>
-    </div>
-  </div>
-</div>
+<h3>Parsed Headers</h3>
+<pre id="headers"></pre>
+
+<h3>Parsed Rows (count)</h3>
+<pre id="rows"></pre>
 
 <script>
-/* ================= CONFIG ================= */
 const SHEET_ID = "1-Wo8A1lNGSMO6z85mLvxemk2CxP_tPihK9mEzTeesOA";
 const TAB_MONTHLY = "MonthlyScores";
-const TAB_SEASON  = "SeasonPoints";
-const REFRESH_MS = 10000;
-const MONTHS = ["January","February","March","April","May","June"];
-/* ========================================= */
+const TAB_SEASON = "SeasonPoints";
 
+const status = document.getElementById("status");
+const csvAEl = document.getElementById("csvA");
+const csvBEl = document.getElementById("csvB");
+const headersEl = document.getElementById("headers");
 const rowsEl = document.getElementById("rows");
-const dot = document.getElementById("dot");
-const statusText = document.getElementById("statusText");
-const subHeader = document.getElementById("subHeader");
-const lastUpdate = document.getElementById("lastUpdate");
-const btnMonth = document.getElementById("btnMonth");
-const btnSeason = document.getElementById("btnSeason");
-const valHead = document.getElementById("valHead");
-const viewHint = document.getElementById("viewHint");
 
-let currentView = "month";
-let teams = [];
-let lastGoodTeams = null;
-
-function setStatus(mode,text){
-  dot.className = "dot " + (mode||"");
-  statusText.textContent = text;
-}
-
-/* ---------- ROBUST CSV PARSER ---------- */
 function parseCSV(text){
-  const rows=[], row=[];
-  let cur="", inQuotes=false;
-  text=String(text||"")
-    .replace(/\uFEFF/g,"")
-    .replace(/\r\n/g,"\n")
-    .replace(/\r/g,"\n");
-
+  const rows=[];
+  let row=[],cur="",q=false;
+  text=String(text).replace(/\uFEFF/g,"").replace(/\r/g,"");
   for(let i=0;i<text.length;i++){
-    const c=text[i], n=text[i+1];
-    if(c==='"'){
-      if(inQuotes && n==='"'){cur+='"';i++;}
-      else inQuotes=!inQuotes;
-    } else if(c===',' && !inQuotes){
-      row.push(cur); cur="";
-    } else if(c==="\n" && !inQuotes){
-      row.push(cur); rows.push(row.splice(0)); cur="";
+    const c=text[i],n=text[i+1];
+    if(c=='"'){
+      if(q && n=='"'){cur+='"';i++} else q=!q;
+    } else if(c==','&&!q){
+      row.push(cur);cur="";
+    } else if(c=='\n'&&!q){
+      row.push(cur);rows.push(row);row=[];cur="";
     } else cur+=c;
   }
-  row.push(cur); rows.push(row);
-  while(rows.length && rows[rows.length-1].every(x=>!String(x).trim())) rows.pop();
-  if(rows.length<2) return {headers:[],rows:[]};
-
-  const headers = rows[0].map(h=>String(h)
-    .replace(/[\u200B-\u200D\u2060]/g,"")
-    .trim().toLowerCase());
-
-  return { headers, rows: rows.slice(1).map(r=>r.map(c=>String(c).trim())) };
+  row.push(cur);rows.push(row);
+  return {
+    headers: rows[0].map(h=>h.trim().toLowerCase()),
+    rows: rows.slice(1)
+  };
 }
 
-function toNumber(x){
-  const n=Number(String(x).replace(/,/g,"").replace(/[^\d.-]/g,""));
-  return Number.isFinite(n)?n:0;
-}
-
-function parseGolf(v){
-  if(!v) return {value:999,display:"—"};
-  if(String(v).toLowerCase()==="e"||toNumber(v)===0) return {value:0,display:"E"};
-  const n=toNumber(v);
-  return {value:n,display:n>0?`+${n}`:`${n}`};
-}
-
-function currentMonth(){
-  return MONTHS[Math.min(new Date().getMonth(),5)];
-}
-
-function render(){
-  rowsEl.innerHTML="";
-  teams.forEach((t,i)=>{
-    const r=document.createElement("div");
-    r.className="row";
-    r.innerHTML=`
-      <div class="pos">${i+1}</div>
-      <div class="team">
-        <div class="name">${t.team}</div>
-        <div class="subline">
-          ${currentView==="month" ? `Season: ${t.season??"—"} pts`
-                                  : `This month: ${t.month.display}`}
-        </div>
-      </div>
-      <div class="value">
-        ${currentView==="month" ? t.month.display : (t.season??"—")}
-      </div>`;
-    rowsEl.appendChild(r);
-  });
-}
-
-async function load(){
+async function run(){
   try{
-    setStatus("sync","Syncing…");
-    const m=currentMonth().toLowerCase();
+    status.textContent="Fetching CSV…";
 
-    const [csvM,csvS]=await Promise.all([
-      fetch(`https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${TAB_MONTHLY}`).then(r=>r.text()),
-      fetch(`https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${TAB_SEASON}`).then(r=>r.text())
+    const urlA=`https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${TAB_MONTHLY}`;
+    const urlB=`https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${TAB_SEASON}`;
+
+    const [a,b]=await Promise.all([
+      fetch(urlA).then(r=>r.text()),
+      fetch(urlB).then(r=>r.text())
     ]);
 
-    const A=parseCSV(csvM), B=parseCSV(csvS);
-    const ti=A.headers.indexOf("team"), mi=A.headers.indexOf(m);
-    if(ti<0||mi<0) throw "MonthlyScores headers missing";
+    csvAEl.textContent=a.slice(0,500);
+    csvBEl.textContent=b.slice(0,500);
 
-    const seasonMap=new Map();
-    const sb=B.headers.indexOf("team");
-    B.rows.forEach(r=>{
-      let s=0,any=false;
-      for(let i=1;i<r.length;i++){ if(r[i]) any=true; s+=toNumber(r[i]); }
-      seasonMap.set(r[sb], any?s:null);
-    });
+    const A=parseCSV(a);
+    const B=parseCSV(b);
 
-    const out=A.rows.map(r=>{
-      const team=r[ti];
-      if(!team) return null;
-      return {
-        team,
-        month:parseGolf(r[mi]),
-        season:seasonMap.get(team)??null
-      };
-    }).filter(Boolean);
+    headersEl.textContent=JSON.stringify({
+      MonthlyHeaders:A.headers,
+      SeasonHeaders:B.headers
+    },null,2);
 
-    if(out.length){
-      teams=out;
-      lastGoodTeams=out;
-      render();
-      setStatus("","Live");
-      lastUpdate.textContent=new Date().toLocaleString();
-      subHeader.textContent=`${currentMonth()} • ${currentView==="month"?"Golf scores":"Points standings"}`;
-    } else if(lastGoodTeams){
-      teams=lastGoodTeams;
-      render();
-      setStatus("sync","Syncing…");
-    }
-  } catch(e){
-    if(lastGoodTeams){
-      teams=lastGoodTeams;
-      render();
-      setStatus("sync","Syncing…");
-    } else {
-      setStatus("bad","Offline");
-    }
+    rowsEl.textContent=JSON.stringify({
+      MonthlyRowCount:A.rows.length,
+      SeasonRowCount:B.rows.length,
+      FirstMonthlyRow:A.rows[0]
+    },null,2);
+
+    status.innerHTML="<span class='ok'>CSV parsed successfully</span>";
+  }catch(e){
+    status.innerHTML="<span class='bad'>ERROR: "+e+"</span>";
   }
 }
 
-btnMonth.onclick=()=>{
-  currentView="month";
-  btnMonth.classList.add("active");
-  btnSeason.classList.remove("active");
-  valHead.textContent="This Month";
-  viewHint.textContent="View: Month";
-  render();
-};
-btnSeason.onclick=()=>{
-  currentView="season";
-  btnSeason.classList.add("active");
-  btnMonth.classList.remove("active");
-  valHead.textContent="Season Total";
-  viewHint.textContent="View: Season";
-  render();
-};
-
-load();
-setInterval(load,REFRESH_MS);
+run();
 </script>
 </body>
 </html>
