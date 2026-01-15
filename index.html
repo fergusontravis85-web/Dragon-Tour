@@ -8,7 +8,6 @@
 <style>
 :root{
   --green:#0b3d2e;
-  --green2:#0a2f24;
   --cream:#f3efe3;
   --line:rgba(255,255,255,.16);
   --text:rgba(255,255,255,.92);
@@ -25,6 +24,8 @@ body{
   background:#000;
   overflow-x:hidden;
 }
+
+/* Background image */
 .bg{
   position:fixed; inset:0;
   background:
@@ -44,7 +45,10 @@ body{
     radial-gradient(900px 600px at 15% 110%, rgba(11,61,46,.35), transparent 60%);
   z-index:-1;
 }
+
 .wrap{max-width:920px;margin:0 auto;padding:28px 16px 50px;}
+
+/* Header */
 .header{
   display:flex;align-items:flex-end;justify-content:space-between;gap:16px;
   padding:18px 18px 14px;
@@ -61,9 +65,12 @@ body{
 .title .sub{font-size:12px;color:var(--muted);letter-spacing:.02em;}
 .meta{text-align:right;font-size:12px;color:var(--muted);line-height:1.4;white-space:nowrap;}
 .meta strong{color:var(--gold);font-weight:650;}
+
 .card{
-  margin-top:14px;background:var(--card);border:1px solid rgba(255,255,255,.10);
-  border-radius:14px;overflow:hidden;box-shadow: 0 18px 45px rgba(0,0,0,.35);
+  margin-top:14px;background:var(--card);
+  border:1px solid rgba(255,255,255,.10);
+  border-radius:14px;overflow:hidden;
+  box-shadow: 0 18px 45px rgba(0,0,0,.35);
   backdrop-filter: blur(6px);
 }
 
@@ -91,21 +98,22 @@ body{
 
 /* Table */
 .table-head{
-  display:grid;grid-template-columns:64px 1fr 140px;
+  display:grid;grid-template-columns:64px 1fr 160px;
   padding:12px 16px;border-bottom:1px solid var(--line);
   font-size:12px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);
 }
 .row{
-  display:grid;grid-template-columns:64px 1fr 140px;
-  padding:14px 16px;border-bottom:1px solid var(--line);align-items:center;
+  display:grid;grid-template-columns:64px 1fr 160px;
+  padding:14px 16px;border-bottom:1px solid var(--line);
+  align-items:center;
 }
 .row:last-child{border-bottom:none}
 .pos{font-variant-numeric:tabular-nums;color:var(--gold);font-weight:800;}
 .team{display:flex;flex-direction:column;gap:2px;min-width:0;}
 .team .name{font-size:16px;font-weight:650;color:var(--cream);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 .team .subline{font-size:12px;color:var(--muted);}
-.points{text-align:right;font-variant-numeric:tabular-nums;font-size:18px;font-weight:850;color:var(--cream);}
-.points .unit{font-size:12px;font-weight:650;color:var(--muted);margin-left:6px;letter-spacing:.10em;text-transform:uppercase;}
+.value{text-align:right;font-variant-numeric:tabular-nums;font-size:18px;font-weight:850;color:var(--cream);}
+.value .unit{font-size:12px;font-weight:650;color:var(--muted);margin-left:6px;letter-spacing:.10em;text-transform:uppercase;}
 
 .status{
   display:flex;gap:10px;align-items:center;justify-content:space-between;
@@ -131,9 +139,9 @@ body{
 .course{font-weight:650;color:var(--cream);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 
 @media (max-width:520px){
-  .table-head,.row{grid-template-columns:48px 1fr 110px;}
+  .table-head,.row{grid-template-columns:48px 1fr 130px;}
   .team .name{font-size:15px;}
-  .points{font-size:17px;}
+  .value{font-size:17px;}
   .schedule-head,.schedule-row{grid-template-columns:120px 1fr;}
   .controls{flex-direction:column;align-items:flex-start;}
 }
@@ -155,7 +163,8 @@ body{
     </div>
   </div>
 
-  <div class="card">
+  <!-- LEADERBOARD -->
+  <div class="card" aria-live="polite">
     <div class="controls">
       <div class="label" id="viewHint">View: Month</div>
       <div class="segment" role="tablist" aria-label="Leaderboard view">
@@ -167,17 +176,18 @@ body{
     <div class="table-head">
       <div>Pos</div>
       <div>Team</div>
-      <div id="pointsHeader" style="text-align:right;">This Month</div>
+      <div id="valueHeader" style="text-align:right;">This Month</div>
     </div>
 
     <div id="rows"></div>
 
     <div class="status">
       <span class="pill"><span class="dot" id="dot"></span> <span id="statusText">Connecting…</span></span>
-      <span id="hint">If Season totals look wrong, check Points headers: team + January..June</span>
+      <span id="hint">Month = golf score • Season = points standings</span>
     </div>
   </div>
 
+  <!-- SCHEDULE -->
   <div class="card">
     <div class="card-title">Season Schedule</div>
     <div class="schedule-head"><div>Month</div><div>Location</div></div>
@@ -191,12 +201,17 @@ body{
 </div>
 
 <script>
+  // ========= CONFIG =========
   const SHEET_ID = "1-Wo8A1lNGSMO6z85mLvxemk2CxP_tPihK9mEzTeesOA";
-  const POINTS_TAB_NAME = "Points";
+  const TAB_MONTHLY = "MonthlyScores";
+  const TAB_SEASON  = "SeasonPoints";
   const REFRESH_MS = 10000;
+  // ==========================
 
-  const POINTS_CSV_URL =
-    `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(POINTS_TAB_NAME)}`;
+  const URL_MONTHLY =
+    `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(TAB_MONTHLY)}`;
+  const URL_SEASON =
+    `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(TAB_SEASON)}`;
 
   const MONTHS = ["January","February","March","April","May","June"];
 
@@ -209,7 +224,7 @@ body{
   const btnMonth = document.getElementById("btnMonth");
   const btnSeason = document.getElementById("btnSeason");
   const viewHint = document.getElementById("viewHint");
-  const pointsHeader = document.getElementById("pointsHeader");
+  const valueHeader = document.getElementById("valueHeader");
 
   refreshRateEl.textContent = Math.round(REFRESH_MS/1000) + "s";
 
@@ -256,7 +271,20 @@ body{
     return { index: idx, name: MONTHS[idx] };
   }
 
-  function computeGolfPositions(sorted, keyFn){
+  // Golf score parsing:
+  // "E" => 0, "0" => 0, "+2" => 2, "-2" => -2
+  // returns number for sorting; lower is better.
+  function parseGolfScore(raw){
+    const s = String(raw ?? "").trim();
+    if (!s) return { value: Number.POSITIVE_INFINITY, display: "—" };
+    if (s.toLowerCase() === "e") return { value: 0, display: "E" };
+    const v = toNumber(s);
+    if (!Number.isFinite(v)) return { value: Number.POSITIVE_INFINITY, display: "—" };
+    if (v === 0) return { value: 0, display: "E" };
+    return { value: v, display: (v > 0 ? `+${v}` : String(v)) };
+  }
+
+  function computeGolfPositions(sorted, keyFn, betterIsLower){
     const labels = new Array(sorted.length);
     let i = 0;
     while (i < sorted.length){
@@ -282,75 +310,155 @@ body{
   function getInitialView(){
     const urlView = getUrlViewOverride();
     if (urlView) return urlView;
-    const saved = localStorage.getItem("dragonTourView");
+    const saved = localStorage.getItem("dragonTourView2");
     if (saved === "season" || saved === "month") return saved;
     return "month";
   }
 
-  let currentView = getInitialView();     // "month" | "season"
-  let lastTeams = [];
+  let currentView = getInitialView(); // "month" | "season"
   let currentMonth = getCurrentTourMonth();
+
+  // Cached normalized data
+  // teams: [{team, golfThisMonth:{value,display}, seasonThisMonthPoints, seasonTotalPoints}]
+  let teams = [];
 
   function applyViewUI(){
     const isMonth = currentView === "month";
     btnMonth.classList.toggle("active", isMonth);
     btnSeason.classList.toggle("active", !isMonth);
-    viewHint.textContent = "View: " + (isMonth ? "Month" : "Season");
-    pointsHeader.textContent = isMonth ? "This Month" : "Season Total";
-    subHeaderEl.textContent = `${currentMonth.name} • ${isMonth ? "Month view" : "Season view"}`;
+    viewHint.textContent = "View: " + (isMonth ? "Month (Golf)" : "Season (Points)");
+    valueHeader.textContent = isMonth ? "This Month" : "Season Total";
+    subHeaderEl.textContent = `${currentMonth.name} • ${isMonth ? "Golf scores" : "Points standings"}`;
   }
 
   function setView(view){
     currentView = view;
-    localStorage.setItem("dragonTourView", view);
+    localStorage.setItem("dragonTourView2", view);
     applyViewUI();
-    render(lastTeams);
+    render();
   }
 
   btnMonth.addEventListener("click", () => setView("month"));
   btnSeason.addEventListener("click", () => setView("season"));
 
-  function render(teams){
-    if (!teams || teams.length === 0){ rowsEl.innerHTML = ""; return; }
+  function render(){
+    if (!teams.length){ rowsEl.innerHTML = ""; return; }
 
     applyViewUI();
-
     const isMonth = currentView === "month";
 
-    const sorted = [...teams].sort((a,b) => {
-      if (isMonth){
-        return (b.monthPoints - a.monthPoints) ||
-               (b.seasonTotal - a.seasonTotal) ||
-               a.team.localeCompare(b.team);
-      } else {
-        return (b.seasonTotal - a.seasonTotal) ||
-               (b.monthPoints - a.monthPoints) ||
-               a.team.localeCompare(b.team);
-      }
-    });
+    let sorted = [...teams];
 
-    const keyFn = isMonth ? (t => t.monthPoints) : (t => t.seasonTotal);
+    if (isMonth){
+      // Sort by best golf score this month (lower is better),
+      // then season points as a secondary tiebreaker, then name.
+      sorted.sort((a,b) =>
+        (a.golfThisMonth.value - b.golfThisMonth.value) ||
+        (b.seasonTotalPoints - a.seasonTotalPoints) ||
+        a.team.localeCompare(b.team)
+      );
+    } else {
+      // Sort by season total points (higher is better),
+      // then this month's golf score (better is lower) as a tiebreaker, then name.
+      sorted.sort((a,b) =>
+        (b.seasonTotalPoints - a.seasonTotalPoints) ||
+        (a.golfThisMonth.value - b.golfThisMonth.value) ||
+        a.team.localeCompare(b.team)
+      );
+    }
+
+    const keyFn = isMonth ? (t => t.golfThisMonth.value) : (t => t.seasonTotalPoints);
     const posLabels = computeGolfPositions(sorted, keyFn);
 
     rowsEl.innerHTML = "";
     sorted.forEach((t, idx) => {
-      const big = isMonth ? t.monthPoints : t.seasonTotal;
+      const big = isMonth ? t.golfThisMonth.display : String(t.seasonTotalPoints);
+      const unit = isMonth ? "" : `<span class="unit">pts</span>`;
       const sub = isMonth
-        ? `Season: ${t.seasonTotal} pts`
-        : `This month: ${t.monthPoints} pts`;
+        ? `Season: ${t.seasonTotalPoints} pts`
+        : `This month: ${t.golfThisMonth.display}`;
 
       const row = document.createElement("div");
       row.className = "row";
       row.innerHTML = `
         <div class="pos">${posLabels[idx]}</div>
         <div class="team">
-          <div class="name">${escapeHtml(t.team)}</div>
+          <div class="name" title="${escapeHtml(t.team)}">${escapeHtml(t.team)}</div>
           <div class="subline">${escapeHtml(sub)}</div>
         </div>
-        <div class="points">${big}<span class="unit">pts</span></div>
+        <div class="value">${escapeHtml(big)}${unit}</div>
       `;
       rowsEl.appendChild(row);
     });
+  }
+
+  async function fetchTab(url){
+    const res = await fetch(url + (url.includes("?") ? "&" : "?") + "t=" + Date.now());
+    if (!res.ok) throw new Error("HTTP " + res.status);
+    return await res.text();
+  }
+
+  function buildFromCSVs(monthlyCSV, seasonCSV){
+    const month = currentMonth.name.toLowerCase();
+
+    const A = parseCSV(monthlyCSV);
+    const B = parseCSV(seasonCSV);
+
+    const teamIdxA = A.headers.indexOf("team");
+    const teamIdxB = B.headers.indexOf("team");
+
+    const monthIdxA = A.headers.indexOf(month);
+    const monthIdxB = B.headers.indexOf(month);
+
+    const seasonMonthIdxsB = MONTHS.map(m => B.headers.indexOf(m.toLowerCase()));
+
+    if (teamIdxA === -1 || monthIdxA === -1) {
+      throw new Error("MonthlyScores missing required columns: team + " + currentMonth.name);
+    }
+    if (teamIdxB === -1) {
+      throw new Error("SeasonPoints missing required column: team");
+    }
+
+    // Build map of season points per team
+    const seasonMap = new Map();
+    B.rows.forEach(r => {
+      const team = (r[teamIdxB] ?? "").trim();
+      if (!team) return;
+
+      let seasonTotalPoints = 0;
+      for (const ci of seasonMonthIdxsB){
+        if (ci >= 0) seasonTotalPoints += toNumber(r[ci]);
+      }
+
+      // this month's points if present
+      const seasonThisMonthPoints = (monthIdxB >= 0) ? toNumber(r[monthIdxB]) : 0;
+
+      seasonMap.set(team.toLowerCase(), {
+        team,
+        seasonTotalPoints,
+        seasonThisMonthPoints
+      });
+    });
+
+    // Merge using MonthlyScores as the "source of truth" for team list
+    const out = [];
+    A.rows.forEach(r => {
+      const team = (r[teamIdxA] ?? "").trim();
+      if (!team) return;
+
+      const golfRaw = r[monthIdxA];
+      const golfThisMonth = parseGolfScore(golfRaw);
+
+      const s = seasonMap.get(team.toLowerCase()) || { team, seasonTotalPoints: 0, seasonThisMonthPoints: 0 };
+
+      out.push({
+        team,
+        golfThisMonth,
+        seasonTotalPoints: s.seasonTotalPoints
+      });
+    });
+
+    teams = out;
   }
 
   async function load(){
@@ -358,45 +466,19 @@ body{
       setStatus(true, "Live");
       currentMonth = getCurrentTourMonth();
 
-      const res = await fetch(POINTS_CSV_URL + "&t=" + Date.now());
-      if (!res.ok) throw new Error("HTTP " + res.status);
+      const [monthlyCSV, seasonCSV] = await Promise.all([
+        fetchTab(URL_MONTHLY),
+        fetchTab(URL_SEASON)
+      ]);
 
-      const text = await res.text();
-      const { headers, rows } = parseCSV(text);
+      buildFromCSVs(monthlyCSV, seasonCSV);
 
-      const teamIdx = headers.indexOf("team");
-      const monthHeader = currentMonth.name.toLowerCase();
-      const monthColIdx = headers.indexOf(monthHeader);
-      const monthColIdxs = MONTHS.map(m => headers.indexOf(m.toLowerCase()));
-
-      if (teamIdx === -1 || monthColIdx === -1){
-        setStatus(false, "Check Points headers (team + January..June)");
-        rowsEl.innerHTML = "";
-        lastUpdateEl.textContent = new Date().toLocaleString();
-        return;
-      }
-
-      lastTeams = rows.map(r => {
-        const team = (r[teamIdx] ?? "").trim();
-        if (!team) return null;
-
-        const monthPoints = toNumber(r[monthColIdx]);
-
-        let seasonTotal = 0;
-        for (const ci of monthColIdxs){
-          if (ci >= 0) seasonTotal += toNumber(r[ci]);
-        }
-
-        return { team, monthPoints, seasonTotal };
-      }).filter(Boolean);
-
-      render(lastTeams);
-
+      render();
       lastUpdateEl.textContent = new Date().toLocaleString();
       setStatus(true, "Live");
-    }catch(e){
+    } catch (e){
       console.error(e);
-      setStatus(false, "Offline (retrying)");
+      setStatus(false, "Offline / sheet mismatch (check tab names + headers)");
     }
   }
 
