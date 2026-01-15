@@ -116,7 +116,7 @@ body{
 .value .unit{font-size:12px;font-weight:650;color:var(--muted);margin-left:6px;letter-spacing:.10em;text-transform:uppercase;}
 
 .status{
-  display:flex;gap:10px;align-items:center;justify-content:space-between;
+  display:flex;gap:10px;align-items:center;justify-content:flex-start;
   padding:10px 16px 14px;color:var(--muted);font-size:12px;
   border-top:1px solid rgba(255,255,255,.06);
   background:linear-gradient(180deg, rgba(0,0,0,0), rgba(0,0,0,.08));
@@ -183,7 +183,6 @@ body{
 
     <div class="status">
       <span class="pill"><span class="dot" id="dot"></span> <span id="statusText">Connecting…</span></span>
-      <span id="hint">Month = golf score • Season = points standings</span>
     </div>
   </div>
 
@@ -271,9 +270,7 @@ body{
     return { index: idx, name: MONTHS[idx] };
   }
 
-  // Golf score parsing:
-  // "E" => 0, "0" => 0, "+2" => 2, "-2" => -2
-  // returns number for sorting; lower is better.
+  // Golf score parsing for MonthlyScores
   function parseGolfScore(raw){
     const s = String(raw ?? "").trim();
     if (!s) return { value: Number.POSITIVE_INFINITY, display: "—" };
@@ -284,7 +281,7 @@ body{
     return { value: v, display: (v > 0 ? `+${v}` : String(v)) };
   }
 
-  function computeGolfPositions(sorted, keyFn, betterIsLower){
+  function computeGolfPositions(sorted, keyFn){
     const labels = new Array(sorted.length);
     let i = 0;
     while (i < sorted.length){
@@ -317,10 +314,7 @@ body{
 
   let currentView = getInitialView(); // "month" | "season"
   let currentMonth = getCurrentTourMonth();
-
-  // Cached normalized data
-  // teams: [{team, golfThisMonth:{value,display}, seasonThisMonthPoints, seasonTotalPoints}]
-  let teams = [];
+  let teams = []; // [{team, golfThisMonth:{value,display}, seasonTotalPoints:null|number}]
 
   function applyViewUI(){
     const isMonth = currentView === "month";
@@ -350,32 +344,34 @@ body{
     let sorted = [...teams];
 
     if (isMonth){
-      // Sort by best golf score this month (lower is better),
-      // then season points as a secondary tiebreaker, then name.
       sorted.sort((a,b) =>
         (a.golfThisMonth.value - b.golfThisMonth.value) ||
-        (b.seasonTotalPoints - a.seasonTotalPoints) ||
+        // if season points missing, treat as -infinity so it never "wins" a tiebreak
+        ((b.seasonTotalPoints ?? -Infinity) - (a.seasonTotalPoints ?? -Infinity)) ||
         a.team.localeCompare(b.team)
       );
     } else {
-      // Sort by season total points (higher is better),
-      // then this month's golf score (better is lower) as a tiebreaker, then name.
       sorted.sort((a,b) =>
-        (b.seasonTotalPoints - a.seasonTotalPoints) ||
+        ((b.seasonTotalPoints ?? -Infinity) - (a.seasonTotalPoints ?? -Infinity)) ||
         (a.golfThisMonth.value - b.golfThisMonth.value) ||
         a.team.localeCompare(b.team)
       );
     }
 
-    const keyFn = isMonth ? (t => t.golfThisMonth.value) : (t => t.seasonTotalPoints);
+    const keyFn = isMonth
+      ? (t => t.golfThisMonth.value)
+      : (t => (t.seasonTotalPoints ?? -Infinity));
     const posLabels = computeGolfPositions(sorted, keyFn);
 
     rowsEl.innerHTML = "";
     sorted.forEach((t, idx) => {
-      const big = isMonth ? t.golfThisMonth.display : String(t.seasonTotalPoints);
+      const big = isMonth
+        ? t.golfThisMonth.display
+        : (t.seasonTotalPoints === null ? "—" : String(t.seasonTotalPoints));
+
       const unit = isMonth ? "" : `<span class="unit">pts</span>`;
       const sub = isMonth
-        ? `Season: ${t.seasonTotalPoints} pts`
+        ? `Season: ${t.seasonTotalPoints === null ? "—" : t.seasonTotalPoints} pts`
         : `This month: ${t.golfThisMonth.display}`;
 
       const row = document.createElement("div");
@@ -401,15 +397,13 @@ body{
   function buildFromCSVs(monthlyCSV, seasonCSV){
     const month = currentMonth.name.toLowerCase();
 
-    const A = parseCSV(monthlyCSV);
-    const B = parseCSV(seasonCSV);
+    const A = parseCSV(monthlyCSV); // MonthlyScores
+    const B = parseCSV(seasonCSV);  // SeasonPoints
 
     const teamIdxA = A.headers.indexOf("team");
     const teamIdxB = B.headers.indexOf("team");
 
     const monthIdxA = A.headers.indexOf(month);
-    const monthIdxB = B.headers.indexOf(month);
-
     const seasonMonthIdxsB = MONTHS.map(m => B.headers.indexOf(m.toLowerCase()));
 
     if (teamIdxA === -1 || monthIdxA === -1) {
@@ -419,43 +413,38 @@ body{
       throw new Error("SeasonPoints missing required column: team");
     }
 
-    // Build map of season points per team
+    // Build map: SeasonPoints ONLY
     const seasonMap = new Map();
     B.rows.forEach(r => {
       const team = (r[teamIdxB] ?? "").trim();
       if (!team) return;
 
-      let seasonTotalPoints = 0;
+      let seasonTotal = 0;
+      let any = false;
+
       for (const ci of seasonMonthIdxsB){
-        if (ci >= 0) seasonTotalPoints += toNumber(r[ci]);
+        if (ci >= 0){
+          const cellRaw = String(r[ci] ?? "").trim();
+          if (cellRaw !== "") any = true;
+          seasonTotal += toNumber(cellRaw);
+        }
       }
 
-      // this month's points if present
-      const seasonThisMonthPoints = (monthIdxB >= 0) ? toNumber(r[monthIdxB]) : 0;
-
-      seasonMap.set(team.toLowerCase(), {
-        team,
-        seasonTotalPoints,
-        seasonThisMonthPoints
-      });
+      seasonMap.set(team.toLowerCase(), any ? seasonTotal : null);
     });
 
-    // Merge using MonthlyScores as the "source of truth" for team list
+    // Merge: team list comes from MonthlyScores; Season totals ONLY from SeasonPoints
     const out = [];
     A.rows.forEach(r => {
       const team = (r[teamIdxA] ?? "").trim();
       if (!team) return;
 
-      const golfRaw = r[monthIdxA];
-      const golfThisMonth = parseGolfScore(golfRaw);
+      const golfThisMonth = parseGolfScore(r[monthIdxA]);
+      const seasonTotalPoints = seasonMap.has(team.toLowerCase())
+        ? seasonMap.get(team.toLowerCase())
+        : null;
 
-      const s = seasonMap.get(team.toLowerCase()) || { team, seasonTotalPoints: 0, seasonThisMonthPoints: 0 };
-
-      out.push({
-        team,
-        golfThisMonth,
-        seasonTotalPoints: s.seasonTotalPoints
-      });
+      out.push({ team, golfThisMonth, seasonTotalPoints });
     });
 
     teams = out;
@@ -478,7 +467,7 @@ body{
       setStatus(true, "Live");
     } catch (e){
       console.error(e);
-      setStatus(false, "Offline / sheet mismatch (check tab names + headers)");
+      setStatus(false, "Offline / sheet mismatch");
     }
   }
 
