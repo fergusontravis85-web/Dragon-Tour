@@ -104,7 +104,6 @@ body{
   letter-spacing:.08em;
   color:var(--muted);
 }
-
 .schedule-head,.schedule-row{
   display:grid;
   grid-template-columns:160px 1fr;
@@ -198,6 +197,7 @@ let lastGoodTeams=[];
 
 const norm=s=>String(s||"").trim().toLowerCase();
 
+/* Robust CSV parser */
 function parseCSV(text){
   const rows=[],row=[];
   let cur="",q=false;
@@ -213,10 +213,42 @@ function parseCSV(text){
   return {headers:rows[0].map(h=>h.trim().toLowerCase()),rows:rows.slice(1)};
 }
 
-function parseGolf(v){
-  if(!v) return {v:999,d:"—"};
-  if(String(v).toLowerCase()=="e"||Number(v)==0) return {v:0,d:"E"};
-  const n=Number(v); return {v:n,d:n>0?`+${n}`:`${n}`};
+/* Helpers */
+function num(x){
+  const n=Number(String(x??"").replace(/,/g,"").trim());
+  return Number.isFinite(n)?n:null;
+}
+
+/* ✅ Monthly score:
+   - Blank => — 
+   - E/e => E
+   - 0 / 0.0 / -0 => E
+   - +2 / -2 / 2 => +2 / -2
+*/
+function parseGolf(raw){
+  const s=String(raw??"").trim();
+  if(!s) return {v: Number.POSITIVE_INFINITY, d:"—"};  // no score yet
+  if(s.toLowerCase()==="e") return {v:0,d:"E"};
+  const n=num(s.replace("+",""));
+  if(n===null) return {v:Number.POSITIVE_INFINITY, d:"—"};
+  if(Object.is(n, -0) || n===0) return {v:0,d:"E"};
+  return {v:n, d:n>0?`+${n}`:`${n}`};
+}
+
+/* ✅ Ties => T# (Masters style) */
+function applyTiePositions(sorted, keyFn){
+  const posLabels = new Array(sorted.length);
+  let i=0;
+  while(i<sorted.length){
+    let j=i+1;
+    const key = keyFn(sorted[i]);
+    while(j<sorted.length && keyFn(sorted[j])===key) j++;
+    const pos = i+1;
+    const label = (j-i>1) ? `T${pos}` : `${pos}`;
+    for(let k=i;k<j;k++) posLabels[k]=label;
+    i=j;
+  }
+  return posLabels;
 }
 
 function currentMonth(){
@@ -225,10 +257,26 @@ function currentMonth(){
 
 function render(){
   rowsEl.innerHTML="";
-  teams.forEach((t,i)=>{
+
+  // Sort per view
+  const sorted=[...teams];
+  if(currentView==="month"){
+    sorted.sort((a,b)=> (a.month.v-b.month.v) || (b.season-a.season) || a.team.localeCompare(b.team));
+  }else{
+    sorted.sort((a,b)=> (b.season-a.season) || (a.month.v-b.month.v) || a.team.localeCompare(b.team));
+  }
+
+  // Positions with ties
+  const keyFn = currentView==="month"
+    ? (t)=>t.month.v
+    : (t)=>t.season;
+
+  const posLabels = applyTiePositions(sorted, keyFn);
+
+  sorted.forEach((t,idx)=>{
     rowsEl.innerHTML+=`
       <div class="row">
-        <div class="pos">${i+1}</div>
+        <div class="pos">${posLabels[idx]}</div>
         <div class="team">
           <div class="name">${t.team}</div>
           <div class="subline">
@@ -257,10 +305,17 @@ async function load(){
 
     const seasonMap=new Map();
     const sb=B.headers.indexOf("team");
+
+    // Season total = sum of Jan–Jun (empty counts as 0)
     B.rows.forEach(r=>{
-      let s=0;
-      for(let i=1;i<r.length;i++) s+=Number(r[i]||0);
-      seasonMap.set(norm(r[sb]),s);
+      const team=r[sb];
+      if(!team) return;
+      let total=0;
+      for(let i=1;i<r.length;i++){
+        const n=num(r[i]);
+        total += (n===null ? 0 : n);
+      }
+      seasonMap.set(norm(team), total);
     });
 
     const out=A.rows.map(r=>{
@@ -268,18 +323,12 @@ async function load(){
       if(!team) return null;
       return {
         team,
-        key:norm(team),
-        month:parseGolf(r[mi]),
-        season:seasonMap.get(norm(team))||0
+        month: parseGolf(r[mi]),
+        season: seasonMap.get(norm(team)) ?? 0
       };
     }).filter(Boolean);
 
     if(out.length){
-      out.sort((a,b)=>
-        currentView==="month"
-          ? a.month.v-b.month.v
-          : b.season-a.season
-      );
       teams=out;
       lastGoodTeams=out;
     } else {
