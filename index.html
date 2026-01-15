@@ -24,8 +24,6 @@ body{
   background:#000;
   overflow-x:hidden;
 }
-
-/* Background image */
 .bg{
   position:fixed; inset:0;
   background:
@@ -33,118 +31,72 @@ body{
     url("https://tpc.com/wp-content/uploads/2020/04/Sawgrass1_1920x1200.jpg");
   background-size:cover;
   background-position:center;
-  filter:saturate(1.12) contrast(1.02);
-  transform:scale(1.02);
-  z-index:-2;
 }
-.bg::after{
-  content:"";
-  position:absolute; inset:0;
-  background:
-    radial-gradient(1200px 700px at 50% -10%, rgba(215,197,138,.26), transparent 60%),
-    radial-gradient(900px 600px at 15% 110%, rgba(11,61,46,.35), transparent 60%);
-  z-index:-1;
-}
-
 .wrap{max-width:920px;margin:0 auto;padding:28px 16px 50px;}
 
-/* Header */
 .header{
-  display:flex;align-items:flex-end;justify-content:space-between;gap:16px;
-  padding:18px 18px 14px;
+  display:flex;justify-content:space-between;gap:16px;
+  padding:18px;
   background:linear-gradient(180deg, rgba(11,61,46,.92), rgba(10,47,36,.86));
-  border:1px solid rgba(255,255,255,.10);
   border-radius:14px;
-  box-shadow: 0 18px 45px rgba(0,0,0,.35);
 }
-.title{display:flex;flex-direction:column;gap:4px;min-width:0;}
 .title h1{
   margin:0;font-weight:750;letter-spacing:.08em;text-transform:uppercase;
-  font-size:16px;color:var(--cream);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  font-size:16px;color:var(--cream);
 }
-.title .sub{font-size:12px;color:var(--muted);letter-spacing:.02em;}
-.meta{text-align:right;font-size:12px;color:var(--muted);line-height:1.4;white-space:nowrap;}
-.meta strong{color:var(--gold);font-weight:650;}
+.title .sub{font-size:12px;color:var(--muted);}
+.meta{font-size:12px;color:var(--muted);text-align:right;}
+.meta strong{color:var(--gold);}
 
 .card{
   margin-top:14px;background:var(--card);
-  border:1px solid rgba(255,255,255,.10);
   border-radius:14px;overflow:hidden;
-  box-shadow: 0 18px 45px rgba(0,0,0,.35);
-  backdrop-filter: blur(6px);
 }
 
-/* Controls */
 .controls{
-  display:flex;justify-content:space-between;align-items:center;gap:12px;
+  display:flex;justify-content:space-between;align-items:center;
   padding:12px 16px;border-bottom:1px solid var(--line);
-  background:linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,0));
 }
-.controls .label{font-size:12px;color:var(--muted);letter-spacing:.02em;}
 .segment{
-  display:inline-flex;border:1px solid rgba(255,255,255,.14);
-  border-radius:999px;overflow:hidden;background:rgba(0,0,0,.18);
+  display:inline-flex;border-radius:999px;overflow:hidden;
 }
 .segment button{
   border:0;background:transparent;color:var(--muted);
-  font-size:12px;letter-spacing:.10em;text-transform:uppercase;
-  padding:8px 12px;cursor:pointer;
+  padding:8px 12px;font-size:12px;letter-spacing:.1em;
 }
 .segment button.active{
-  background:rgba(215,197,138,.18);
+  background:rgba(215,197,138,.2);
   color:var(--cream);
-  box-shadow: inset 0 0 0 1px rgba(215,197,138,.30);
 }
 
-/* Table */
+.table-head,.row{
+  display:grid;grid-template-columns:64px 1fr 160px;
+  padding:14px 16px;align-items:center;
+}
 .table-head{
-  display:grid;grid-template-columns:64px 1fr 160px;
-  padding:12px 16px;border-bottom:1px solid var(--line);
-  font-size:12px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);
+  font-size:12px;color:var(--muted);
+  border-bottom:1px solid var(--line);
 }
-.row{
-  display:grid;grid-template-columns:64px 1fr 160px;
-  padding:14px 16px;border-bottom:1px solid var(--line);
-  align-items:center;
-}
-.row:last-child{border-bottom:none}
-.pos{font-variant-numeric:tabular-nums;color:var(--gold);font-weight:800;}
-.team{display:flex;flex-direction:column;gap:2px;min-width:0;}
-.team .name{font-size:16px;font-weight:650;color:var(--cream);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.row{border-bottom:1px solid var(--line);}
+.pos{color:var(--gold);font-weight:800;}
+.team .name{font-weight:650;}
 .team .subline{font-size:12px;color:var(--muted);}
-.value{text-align:right;font-variant-numeric:tabular-nums;font-size:18px;font-weight:850;color:var(--cream);}
-.value .unit{font-size:12px;font-weight:650;color:var(--muted);margin-left:6px;letter-spacing:.10em;text-transform:uppercase;}
+.value{text-align:right;font-size:18px;font-weight:850;}
 
 .status{
-  display:flex;gap:10px;align-items:center;justify-content:flex-start;
-  padding:10px 16px 14px;color:var(--muted);font-size:12px;
-  border-top:1px solid rgba(255,255,255,.06);
-  background:linear-gradient(180deg, rgba(0,0,0,0), rgba(0,0,0,.08));
+  padding:10px 16px;font-size:12px;color:var(--muted);
 }
-.pill{display:inline-flex;gap:8px;align-items:center;padding:6px 10px;border-radius:999px;border:1px solid rgba(255,255,255,.12);background:rgba(0,0,0,.18);}
-.dot{width:8px;height:8px;border-radius:50%;background:#7CFC98;box-shadow:0 0 0 3px rgba(124,252,152,.14);}
-.dot.bad{background:#ff6b6b;box-shadow:0 0 0 3px rgba(255,107,107,.14);}
-
-/* Schedule */
-.card-title{
-  padding:12px 16px;border-bottom:1px solid var(--line);
-  font-size:12px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);
-  background:linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,0));
+.pill{
+  display:inline-flex;align-items:center;gap:8px;
+  padding:6px 10px;border-radius:999px;
+  border:1px solid rgba(255,255,255,.15);
 }
-.schedule-head,.schedule-row{display:grid;grid-template-columns:160px 1fr;padding:14px 16px;align-items:center;}
-.schedule-head{border-bottom:1px solid var(--line);font-size:12px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);}
-.schedule-row{border-bottom:1px solid var(--line);}
-.schedule-row:last-child{border-bottom:none;}
-.month{font-weight:800;color:var(--gold);}
-.course{font-weight:650;color:var(--cream);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-
-@media (max-width:520px){
-  .table-head,.row{grid-template-columns:48px 1fr 130px;}
-  .team .name{font-size:15px;}
-  .value{font-size:17px;}
-  .schedule-head,.schedule-row{grid-template-columns:120px 1fr;}
-  .controls{flex-direction:column;align-items:flex-start;}
+.dot{
+  width:8px;height:8px;border-radius:50%;
+  background:#7CFC98;
 }
+.dot.sync{background:#ffd166;}
+.dot.bad{background:#ff6b6b;}
 </style>
 </head>
 
@@ -158,347 +110,149 @@ body{
       <div class="sub" id="subHeader">Loading…</div>
     </div>
     <div class="meta">
-      Last update: <strong id="lastUpdate">—</strong><br/>
-      Refresh: <strong id="refreshRate">10s</strong>
+      Last update: <strong id="lastUpdate">—</strong>
     </div>
   </div>
 
-  <!-- LEADERBOARD -->
-  <div class="card" aria-live="polite">
+  <div class="card">
     <div class="controls">
-      <div class="label" id="viewHint">View: Month</div>
-      <div class="segment" role="tablist" aria-label="Leaderboard view">
-        <button id="btnMonth" type="button">Month</button>
-        <button id="btnSeason" type="button">Season</button>
+      <div id="viewHint">View: Month</div>
+      <div class="segment">
+        <button id="btnMonth">Month</button>
+        <button id="btnSeason">Season</button>
       </div>
     </div>
 
     <div class="table-head">
-      <div>Pos</div>
-      <div>Team</div>
-      <div id="valueHeader" style="text-align:right;">This Month</div>
+      <div>Pos</div><div>Team</div><div>This Month</div>
     </div>
-
     <div id="rows"></div>
 
     <div class="status">
-      <span class="pill"><span class="dot" id="dot"></span> <span id="statusText">Connecting…</span></span>
+      <span class="pill">
+        <span class="dot" id="dot"></span>
+        <span id="statusText">Connecting…</span>
+      </span>
     </div>
-  </div>
-
-  <!-- SCHEDULE -->
-  <div class="card">
-    <div class="card-title">Season Schedule</div>
-    <div class="schedule-head"><div>Month</div><div>Location</div></div>
-    <div class="schedule-row"><div class="month">January</div><div class="course">Viera East</div></div>
-    <div class="schedule-row"><div class="month">February</div><div class="course">Duran</div></div>
-    <div class="schedule-row"><div class="month">March</div><div class="course">Royal St Cloud</div></div>
-    <div class="schedule-row"><div class="month">April</div><div class="course">Duran Short Course</div></div>
-    <div class="schedule-row"><div class="month">May</div><div class="course">Great Outdoors</div></div>
-    <div class="schedule-row"><div class="month">June</div><div class="course">Manatee Cove</div></div>
   </div>
 </div>
 
 <script>
-  // ========= CONFIG =========
-  const SHEET_ID = "1-Wo8A1lNGSMO6z85mLvxemk2CxP_tPihK9mEzTeesOA";
-  const TAB_MONTHLY = "MonthlyScores";
-  const TAB_SEASON  = "SeasonPoints";
-  const REFRESH_MS = 10000;
-  // ==========================
+const SHEET_ID = "1-Wo8A1lNGSMO6z85mLvxemk2CxP_tPihK9mEzTeesOA";
+const TAB_MONTHLY = "MonthlyScores";
+const TAB_SEASON = "SeasonPoints";
+const REFRESH_MS = 10000;
+const MONTHS = ["January","February","March","April","May","June"];
 
-  const URL_MONTHLY =
-    `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(TAB_MONTHLY)}`;
-  const URL_SEASON =
-    `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(TAB_SEASON)}`;
+const rowsEl = document.getElementById("rows");
+const statusText = document.getElementById("statusText");
+const dot = document.getElementById("dot");
+const subHeader = document.getElementById("subHeader");
+const btnMonth = document.getElementById("btnMonth");
+const btnSeason = document.getElementById("btnSeason");
 
-  const MONTHS = ["January","February","March","April","May","June"];
+let currentView = "month";
+let teams = [];
+let lastGoodTeams = null;
 
-  const rowsEl = document.getElementById("rows");
-  const lastUpdateEl = document.getElementById("lastUpdate");
-  const refreshRateEl = document.getElementById("refreshRate");
-  const statusTextEl = document.getElementById("statusText");
-  const dotEl = document.getElementById("dot");
-  const subHeaderEl = document.getElementById("subHeader");
-  const btnMonth = document.getElementById("btnMonth");
-  const btnSeason = document.getElementById("btnSeason");
-  const viewHint = document.getElementById("viewHint");
-  const valueHeader = document.getElementById("valueHeader");
+function setStatus(mode,text){
+  statusText.textContent = text;
+  dot.className = "dot " + (mode||"");
+}
 
-  refreshRateEl.textContent = Math.round(REFRESH_MS/1000) + "s";
+function parseCSV(t){
+  const lines = t.trim().split(/\r?\n/).map(l=>l.split(","));
+  return { headers: lines[0].map(h=>h.toLowerCase()), rows: lines.slice(1) };
+}
 
-  function setStatus(ok, text){
-    statusTextEl.textContent = text;
-    dotEl.classList.toggle("bad", !ok);
-  }
+function toNumber(x){
+  const n = Number(String(x).replace(/[^\d.-]/g,""));
+  return Number.isFinite(n)?n:0;
+}
 
-  function escapeHtml(str){
-    return String(str).replace(/[&<>"']/g, s => ({
-      "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"
-    })[s]);
-  }
+function parseGolf(v){
+  if(!v) return {value:999,display:"—"};
+  if(String(v).toLowerCase()=="e"||toNumber(v)==0) return {value:0,display:"E"};
+  const n=toNumber(v);
+  return {value:n,display:n>0?`+${n}`:`${n}`};
+}
 
-  // ✅ Robust CSV parser (handles quotes, commas in quotes, escaped quotes, newlines)
-  function parseCSV(text){
-    const rows = [];
-    let row = [];
-    let cur = "";
-    let inQuotes = false;
+function getMonth(){
+  const i=Math.min(new Date().getMonth(),5);
+  return MONTHS[i];
+}
 
-    text = String(text || "").replace(/\r\n/g, "\n").replace(/\r/g, "\n");
+function render(){
+  rowsEl.innerHTML="";
+  teams.forEach((t,i)=>{
+    const r=document.createElement("div");
+    r.className="row";
+    r.innerHTML=`
+      <div class="pos">${i+1}</div>
+      <div class="team">
+        <div class="name">${t.team}</div>
+        <div class="subline">${currentView=="month"?`Season: ${t.season}`:`This month: ${t.month.display}`}</div>
+      </div>
+      <div class="value">${currentView=="month"?t.month.display:t.season}</div>`;
+    rowsEl.appendChild(r);
+  });
+}
 
-    for (let i = 0; i < text.length; i++){
-      const ch = text[i];
-      const next = text[i+1];
+async function load(){
+  try{
+    setStatus("sync","Syncing…");
+    const m=getMonth().toLowerCase();
 
-      if (ch === '"'){
-        if (inQuotes && next === '"'){
-          cur += '"';
-          i++;
-        } else {
-          inQuotes = !inQuotes;
-        }
-      } else if (ch === "," && !inQuotes){
-        row.push(cur);
-        cur = "";
-      } else if (ch === "\n" && !inQuotes){
-        row.push(cur);
-        rows.push(row);
-        row = [];
-        cur = "";
-      } else {
-        cur += ch;
-      }
-    }
-    row.push(cur);
-    rows.push(row);
+    const [a,b]=await Promise.all([
+      fetch(`https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${TAB_MONTHLY}`).then(r=>r.text()),
+      fetch(`https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${TAB_SEASON}`).then(r=>r.text())
+    ]);
 
-    while (rows.length && rows[rows.length-1].every(c => String(c).trim() === "")) rows.pop();
+    const A=parseCSV(a), B=parseCSV(b);
+    const mi=A.headers.indexOf(m);
+    const ti=A.headers.indexOf("team");
+    const sm=B.headers.indexOf("team");
 
-    if (rows.length < 2) return { headers: [], rows: [] };
-
-    const headers = rows[0].map(h => String(h).trim().toLowerCase());
-    const data = rows.slice(1).map(r => r.map(c => String(c).trim()));
-
-    return { headers, rows: data };
-  }
-
-  // ✅ Hardened number parse (tolerates 1,000 and strips junk)
-  function toNumber(x){
-    const s = String(x ?? "").replace(/,/g, "").trim();
-    const n = Number(s.replace(/[^\d.-]/g,""));
-    return Number.isFinite(n) ? n : 0;
-  }
-
-  function getCurrentTourMonth(){
-    const idx = Math.min(Math.max(new Date().getMonth(), 0), 5);
-    return { index: idx, name: MONTHS[idx] };
-  }
-
-  // Golf score parsing for MonthlyScores
-  function parseGolfScore(raw){
-    const s = String(raw ?? "").trim();
-    if (!s) return { value: Number.POSITIVE_INFINITY, display: "—" };
-    if (s.toLowerCase() === "e") return { value: 0, display: "E" };
-    const v = toNumber(s);
-    if (!Number.isFinite(v)) return { value: Number.POSITIVE_INFINITY, display: "—" };
-    if (v === 0) return { value: 0, display: "E" };
-    return { value: v, display: (v > 0 ? `+${v}` : String(v)) };
-  }
-
-  function computeGolfPositions(sorted, keyFn){
-    const labels = new Array(sorted.length);
-    let i = 0;
-    while (i < sorted.length){
-      let j = i + 1;
-      while (j < sorted.length && keyFn(sorted[j]) === keyFn(sorted[i])) j++;
-      const startPos = i + 1;
-      const label = (j - i > 1) ? ("T" + startPos) : String(startPos);
-      for (let k = i; k < j; k++) labels[k] = label;
-      i = j;
-    }
-    return labels;
-  }
-
-  function getUrlViewOverride(){
-    const v = new URLSearchParams(location.search).get("view");
-    if (!v) return null;
-    const lower = v.toLowerCase();
-    if (lower === "season") return "season";
-    if (lower === "month") return "month";
-    return null;
-  }
-
-  function getInitialView(){
-    const urlView = getUrlViewOverride();
-    if (urlView) return urlView;
-    const saved = localStorage.getItem("dragonTourView2");
-    if (saved === "season" || saved === "month") return saved;
-    return "month";
-  }
-
-  let currentView = getInitialView(); // "month" | "season"
-  let currentMonth = getCurrentTourMonth();
-  let teams = []; // [{team, golfThisMonth:{value,display}, seasonTotalPoints:null|number}]
-
-  function applyViewUI(){
-    const isMonth = currentView === "month";
-    btnMonth.classList.toggle("active", isMonth);
-    btnSeason.classList.toggle("active", !isMonth);
-    viewHint.textContent = "View: " + (isMonth ? "Month (Golf)" : "Season (Points)");
-    valueHeader.textContent = isMonth ? "This Month" : "Season Total";
-    subHeaderEl.textContent = `${currentMonth.name} • ${isMonth ? "Golf scores" : "Points standings"}`;
-  }
-
-  function setView(view){
-    currentView = view;
-    localStorage.setItem("dragonTourView2", view);
-    applyViewUI();
-    render();
-  }
-
-  btnMonth.addEventListener("click", () => setView("month"));
-  btnSeason.addEventListener("click", () => setView("season"));
-
-  function render(){
-    if (!teams.length){ rowsEl.innerHTML = ""; return; }
-
-    applyViewUI();
-    const isMonth = currentView === "month";
-
-    let sorted = [...teams];
-
-    if (isMonth){
-      sorted.sort((a,b) =>
-        (a.golfThisMonth.value - b.golfThisMonth.value) ||
-        ((b.seasonTotalPoints ?? -Infinity) - (a.seasonTotalPoints ?? -Infinity)) ||
-        a.team.localeCompare(b.team)
-      );
-    } else {
-      sorted.sort((a,b) =>
-        ((b.seasonTotalPoints ?? -Infinity) - (a.seasonTotalPoints ?? -Infinity)) ||
-        (a.golfThisMonth.value - b.golfThisMonth.value) ||
-        a.team.localeCompare(b.team)
-      );
-    }
-
-    const keyFn = isMonth
-      ? (t => t.golfThisMonth.value)
-      : (t => (t.seasonTotalPoints ?? -Infinity));
-    const posLabels = computeGolfPositions(sorted, keyFn);
-
-    rowsEl.innerHTML = "";
-    sorted.forEach((t, idx) => {
-      const big = isMonth
-        ? t.golfThisMonth.display
-        : (t.seasonTotalPoints === null ? "—" : String(t.seasonTotalPoints));
-
-      const unit = isMonth ? "" : `<span class="unit">pts</span>`;
-      const sub = isMonth
-        ? `Season: ${t.seasonTotalPoints === null ? "—" : t.seasonTotalPoints} pts`
-        : `This month: ${t.golfThisMonth.display}`;
-
-      const row = document.createElement("div");
-      row.className = "row";
-      row.innerHTML = `
-        <div class="pos">${posLabels[idx]}</div>
-        <div class="team">
-          <div class="name" title="${escapeHtml(t.team)}">${escapeHtml(t.team)}</div>
-          <div class="subline">${escapeHtml(sub)}</div>
-        </div>
-        <div class="value">${escapeHtml(big)}${unit}</div>
-      `;
-      rowsEl.appendChild(row);
-    });
-  }
-
-  async function fetchTab(url){
-    const res = await fetch(url + (url.includes("?") ? "&" : "?") + "t=" + Date.now());
-    if (!res.ok) throw new Error("HTTP " + res.status);
-    return await res.text();
-  }
-
-  function buildFromCSVs(monthlyCSV, seasonCSV){
-    const month = currentMonth.name.toLowerCase();
-
-    const A = parseCSV(monthlyCSV); // MonthlyScores
-    const B = parseCSV(seasonCSV);  // SeasonPoints
-
-    const teamIdxA = A.headers.indexOf("team");
-    const teamIdxB = B.headers.indexOf("team");
-
-    const monthIdxA = A.headers.indexOf(month);
-    const seasonMonthIdxsB = MONTHS.map(m => B.headers.indexOf(m.toLowerCase()));
-
-    if (teamIdxA === -1 || monthIdxA === -1) {
-      throw new Error("MonthlyScores missing required columns");
-    }
-    if (teamIdxB === -1) {
-      throw new Error("SeasonPoints missing required column");
-    }
-
-    // Build map: SeasonPoints ONLY
-    const seasonMap = new Map();
-    B.rows.forEach(r => {
-      const team = (r[teamIdxB] ?? "").trim();
-      if (!team) return;
-
-      let seasonTotal = 0;
-      let any = false;
-
-      for (const ci of seasonMonthIdxsB){
-        if (ci >= 0){
-          const cellRaw = String(r[ci] ?? "").trim();
-          if (cellRaw !== "") any = true;
-          seasonTotal += toNumber(cellRaw);
-        }
-      }
-
-      seasonMap.set(team.toLowerCase(), any ? seasonTotal : null);
+    const seasonMap=new Map();
+    B.rows.forEach(r=>{
+      let s=0;
+      for(let i=1;i<r.length;i++) s+=toNumber(r[i]);
+      seasonMap.set(r[sm],s);
     });
 
-    // Merge: team list comes from MonthlyScores; Season totals ONLY from SeasonPoints
-    const out = [];
-    A.rows.forEach(r => {
-      const team = (r[teamIdxA] ?? "").trim();
-      if (!team) return;
+    const out=A.rows.map(r=>({
+      team:r[ti],
+      month:parseGolf(r[mi]),
+      season:seasonMap.get(r[ti])??"—"
+    })).filter(t=>t.team);
 
-      const golfThisMonth = parseGolfScore(r[monthIdxA]);
-      const seasonTotalPoints = seasonMap.has(team.toLowerCase())
-        ? seasonMap.get(team.toLowerCase())
-        : null;
-
-      out.push({ team, golfThisMonth, seasonTotalPoints });
-    });
-
-    teams = out;
-  }
-
-  async function load(){
-    try{
-      setStatus(true, "Live");
-      currentMonth = getCurrentTourMonth();
-
-      const [monthlyCSV, seasonCSV] = await Promise.all([
-        fetchTab(URL_MONTHLY),
-        fetchTab(URL_SEASON)
-      ]);
-
-      buildFromCSVs(monthlyCSV, seasonCSV);
-
+    if(out.length){
+      teams=out;
+      lastGoodTeams=out;
       render();
-      lastUpdateEl.textContent = new Date().toLocaleString();
-      setStatus(true, "Live");
-    } catch (e){
-      console.error(e);
-      setStatus(false, "Sheet mismatch");
+      setStatus("", "Live");
+      document.getElementById("lastUpdate").textContent=new Date().toLocaleString();
+    }else if(lastGoodTeams){
+      teams=lastGoodTeams;
+      render();
+      setStatus("sync","Syncing…");
+    }
+  }catch(e){
+    if(lastGoodTeams){
+      teams=lastGoodTeams;
+      render();
+      setStatus("sync","Syncing…");
+    }else{
+      setStatus("bad","Offline");
     }
   }
+}
 
-  // init
-  setView(currentView);
-  load();
-  setInterval(load, REFRESH_MS);
+btnMonth.onclick=()=>{currentView="month";render();};
+btnSeason.onclick=()=>{currentView="season";render();};
+
+load();
+setInterval(load,REFRESH_MS);
 </script>
 </body>
 </html>
