@@ -1,100 +1,141 @@
 <!doctype html>
-<html>
+<html lang="en">
 <head>
-<meta charset="utf-8">
-<title>Dragon Tour DEBUG</title>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Dragon Tour Leaderboard</title>
+
 <style>
-body{background:#111;color:#eee;font-family:system-ui;padding:20px}
-pre{background:#000;padding:12px;border-radius:8px;overflow:auto}
-.ok{color:#7CFC98}
-.bad{color:#ff6b6b}
+body{margin:0;font-family:system-ui;background:#000;color:#eee}
+.bg{position:fixed;inset:0;background:
+linear-gradient(180deg,rgba(0,0,0,.55),rgba(0,0,0,.78)),
+url("https://tpc.com/wp-content/uploads/2020/04/Sawgrass1_1920x1200.jpg");
+background-size:cover;background-position:center;z-index:-1}
+.wrap{max-width:900px;margin:0 auto;padding:24px}
+.card{background:rgba(10,47,36,.85);border-radius:14px;overflow:hidden}
+.table-head,.row{display:grid;grid-template-columns:60px 1fr 120px;padding:12px}
+.table-head{border-bottom:1px solid rgba(255,255,255,.15);font-size:12px;color:#ccc}
+.row{border-bottom:1px solid rgba(255,255,255,.1)}
+.pos{color:#d7c58a;font-weight:800}
+.value{text-align:right;font-weight:800}
+.status{padding:10px;font-size:12px;color:#ccc}
+.dot{width:8px;height:8px;border-radius:50%;display:inline-block;margin-right:6px}
+.dot.live{background:#7CFC98}
+.dot.sync{background:#ffd166}
 </style>
 </head>
+
 <body>
+<div class="bg"></div>
+<div class="wrap">
+  <h2>Dragon Tour Leaderboard</h2>
 
-<h1>Dragon Tour – Debug Mode</h1>
-<div id="status">Starting…</div>
-
-<h3>MonthlyScores CSV (first 500 chars)</h3>
-<pre id="csvA"></pre>
-
-<h3>SeasonPoints CSV (first 500 chars)</h3>
-<pre id="csvB"></pre>
-
-<h3>Parsed Headers</h3>
-<pre id="headers"></pre>
-
-<h3>Parsed Rows (count)</h3>
-<pre id="rows"></pre>
+  <div class="card">
+    <div class="table-head">
+      <div>Pos</div><div>Team</div><div>This Month</div>
+    </div>
+    <div id="rows"></div>
+    <div class="status">
+      <span class="dot sync" id="dot"></span>
+      <span id="status">Syncing…</span>
+    </div>
+  </div>
+</div>
 
 <script>
-const SHEET_ID = "1-Wo8A1lNGSMO6z85mLvxemk2CxP_tPihK9mEzTeesOA";
-const TAB_MONTHLY = "MonthlyScores";
-const TAB_SEASON = "SeasonPoints";
+const SHEET_ID="1-Wo8A1lNGSMO6z85mLvxemk2CxP_tPihK9mEzTeesOA";
+const TAB_MONTHLY="MonthlyScores";
+const TAB_SEASON="SeasonPoints";
+const MONTHS=["January","February","March","April","May","June"];
+const REFRESH=10000;
 
-const status = document.getElementById("status");
-const csvAEl = document.getElementById("csvA");
-const csvBEl = document.getElementById("csvB");
-const headersEl = document.getElementById("headers");
-const rowsEl = document.getElementById("rows");
+const rowsEl=document.getElementById("rows");
+const statusEl=document.getElementById("status");
+const dot=document.getElementById("dot");
 
-function parseCSV(text){
-  const rows=[];
-  let row=[],cur="",q=false;
-  text=String(text).replace(/\uFEFF/g,"").replace(/\r/g,"");
-  for(let i=0;i<text.length;i++){
-    const c=text[i],n=text[i+1];
-    if(c=='"'){
-      if(q && n=='"'){cur+='"';i++} else q=!q;
-    } else if(c==','&&!q){
-      row.push(cur);cur="";
-    } else if(c=='\n'&&!q){
-      row.push(cur);rows.push(row);row=[];cur="";
-    } else cur+=c;
+let lastGood=[];
+
+const norm = s => String(s||"").trim().toLowerCase();
+
+function parseCSV(t){
+  const rows=[],row=[];
+  let cur="",q=false;
+  t=String(t).replace(/\uFEFF/g,"").replace(/\r/g,"");
+  for(let i=0;i<t.length;i++){
+    const c=t[i],n=t[i+1];
+    if(c=='"'){ if(q&&n=='"'){cur+='"';i++} else q=!q; }
+    else if(c==','&&!q){ row.push(cur); cur=""; }
+    else if(c=='\n'&&!q){ row.push(cur); rows.push(row.splice(0)); cur=""; }
+    else cur+=c;
   }
-  row.push(cur);rows.push(row);
-  return {
-    headers: rows[0].map(h=>h.trim().toLowerCase()),
-    rows: rows.slice(1)
-  };
+  row.push(cur); rows.push(row);
+  return {headers:rows[0].map(h=>h.trim().toLowerCase()),rows:rows.slice(1)};
 }
 
-async function run(){
-  try{
-    status.textContent="Fetching CSV…";
+function parseGolf(v){
+  if(!v) return {v:999,d:"—"};
+  if(String(v).toLowerCase()=="e"||Number(v)==0) return {v:0,d:"E"};
+  const n=Number(v); return {v:n,d:n>0?`+${n}`:`${n}`};
+}
 
-    const urlA=`https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${TAB_MONTHLY}`;
-    const urlB=`https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${TAB_SEASON}`;
+async function load(){
+  try{
+    dot.className="dot sync"; statusEl.textContent="Syncing…";
+    const m=MONTHS[Math.min(new Date().getMonth(),5)].toLowerCase();
 
     const [a,b]=await Promise.all([
-      fetch(urlA).then(r=>r.text()),
-      fetch(urlB).then(r=>r.text())
+      fetch(`https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${TAB_MONTHLY}`).then(r=>r.text()),
+      fetch(`https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${TAB_SEASON}`).then(r=>r.text())
     ]);
 
-    csvAEl.textContent=a.slice(0,500);
-    csvBEl.textContent=b.slice(0,500);
+    const A=parseCSV(a), B=parseCSV(b);
+    const ti=A.headers.indexOf("team"), mi=A.headers.indexOf(m);
 
-    const A=parseCSV(a);
-    const B=parseCSV(b);
+    const seasonMap=new Map();
+    const sb=B.headers.indexOf("team");
+    B.rows.forEach(r=>{
+      let s=0;
+      for(let i=1;i<r.length;i++) s+=Number(r[i]||0);
+      seasonMap.set(norm(r[sb]),s);
+    });
 
-    headersEl.textContent=JSON.stringify({
-      MonthlyHeaders:A.headers,
-      SeasonHeaders:B.headers
-    },null,2);
+    const out=A.rows.map(r=>{
+      const team=r[ti];
+      if(!team) return null;
+      return {
+        team,
+        key:norm(team),
+        month:parseGolf(r[mi]),
+        season:seasonMap.get(norm(team)) ?? 0
+      };
+    }).filter(Boolean);
 
-    rowsEl.textContent=JSON.stringify({
-      MonthlyRowCount:A.rows.length,
-      SeasonRowCount:B.rows.length,
-      FirstMonthlyRow:A.rows[0]
-    },null,2);
+    if(out.length){
+      out.sort((a,b)=>a.month.v-b.month.v);
+      lastGood=out;
+    }
 
-    status.innerHTML="<span class='ok'>CSV parsed successfully</span>";
-  }catch(e){
-    status.innerHTML="<span class='bad'>ERROR: "+e+"</span>";
+    const data=out.length?out:lastGood;
+    rowsEl.innerHTML="";
+    data.forEach((t,i)=>{
+      rowsEl.innerHTML+=`
+        <div class="row">
+          <div class="pos">${i+1}</div>
+          <div>${t.team}</div>
+          <div class="value">${t.month.d}</div>
+        </div>`;
+    });
+
+    dot.className="dot live"; statusEl.textContent="Live";
+  }catch{
+    if(lastGood.length){
+      dot.className="dot sync"; statusEl.textContent="Syncing…";
+    }
   }
 }
 
-run();
+load();
+setInterval(load,REFRESH);
 </script>
 </body>
 </html>
