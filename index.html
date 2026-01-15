@@ -238,30 +238,55 @@ body{
     })[s]);
   }
 
-  function parseCSV(csvText){
-    const lines = csvText.trim().split(/\r?\n/);
-    if (lines.length < 2) return { headers: [], rows: [] };
+  // ✅ Robust CSV parser (handles quotes, commas in quotes, escaped quotes, newlines)
+  function parseCSV(text){
+    const rows = [];
+    let row = [];
+    let cur = "";
+    let inQuotes = false;
 
-    const parseLine = (line) => {
-      const cells = [];
-      let cur = "", inQuotes = false;
-      for (let i=0;i<line.length;i++){
-        const ch = line[i];
-        if (ch === '"') inQuotes = !inQuotes;
-        else if (ch === "," && !inQuotes){ cells.push(cur); cur=""; }
-        else cur += ch;
+    text = String(text || "").replace(/\r\n/g, "\n").replace(/\r/g, "\n");
+
+    for (let i = 0; i < text.length; i++){
+      const ch = text[i];
+      const next = text[i+1];
+
+      if (ch === '"'){
+        if (inQuotes && next === '"'){
+          cur += '"';
+          i++;
+        } else {
+          inQuotes = !inQuotes;
+        }
+      } else if (ch === "," && !inQuotes){
+        row.push(cur);
+        cur = "";
+      } else if (ch === "\n" && !inQuotes){
+        row.push(cur);
+        rows.push(row);
+        row = [];
+        cur = "";
+      } else {
+        cur += ch;
       }
-      cells.push(cur);
-      return cells.map(c => c.replace(/^"|"$/g,"").trim());
-    };
+    }
+    row.push(cur);
+    rows.push(row);
 
-    const headers = parseLine(lines[0]).map(h => h.toLowerCase());
-    const rows = lines.slice(1).map(parseLine);
-    return { headers, rows };
+    while (rows.length && rows[rows.length-1].every(c => String(c).trim() === "")) rows.pop();
+
+    if (rows.length < 2) return { headers: [], rows: [] };
+
+    const headers = rows[0].map(h => String(h).trim().toLowerCase());
+    const data = rows.slice(1).map(r => r.map(c => String(c).trim()));
+
+    return { headers, rows: data };
   }
 
+  // ✅ Hardened number parse (tolerates 1,000 and strips junk)
   function toNumber(x){
-    const n = Number(String(x ?? "").replace(/[^\d.-]/g,""));
+    const s = String(x ?? "").replace(/,/g, "").trim();
+    const n = Number(s.replace(/[^\d.-]/g,""));
     return Number.isFinite(n) ? n : 0;
   }
 
@@ -346,7 +371,6 @@ body{
     if (isMonth){
       sorted.sort((a,b) =>
         (a.golfThisMonth.value - b.golfThisMonth.value) ||
-        // if season points missing, treat as -infinity so it never "wins" a tiebreak
         ((b.seasonTotalPoints ?? -Infinity) - (a.seasonTotalPoints ?? -Infinity)) ||
         a.team.localeCompare(b.team)
       );
@@ -407,10 +431,10 @@ body{
     const seasonMonthIdxsB = MONTHS.map(m => B.headers.indexOf(m.toLowerCase()));
 
     if (teamIdxA === -1 || monthIdxA === -1) {
-      throw new Error("MonthlyScores missing required columns: team + " + currentMonth.name);
+      throw new Error("MonthlyScores missing required columns");
     }
     if (teamIdxB === -1) {
-      throw new Error("SeasonPoints missing required column: team");
+      throw new Error("SeasonPoints missing required column");
     }
 
     // Build map: SeasonPoints ONLY
@@ -467,7 +491,7 @@ body{
       setStatus(true, "Live");
     } catch (e){
       console.error(e);
-      setStatus(false, "Offline / sheet mismatch");
+      setStatus(false, "Sheet mismatch");
     }
   }
 
