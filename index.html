@@ -7,7 +7,6 @@
 
 <style>
 :root{
-  --green:#0b3d2e;
   --cream:#f3efe3;
   --line:rgba(255,255,255,.16);
   --text:rgba(255,255,255,.92);
@@ -16,52 +15,129 @@
   --card:rgba(10,47,36,.82);
 }
 *{box-sizing:border-box}
-body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;color:var(--text);background:#000;min-height:100vh;}
+body{
+  margin:0;
+  font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;
+  color:var(--text);
+  background:#000;
+  min-height:100vh;
+  overflow-x:hidden;
+}
 .bg{
   position:fixed; inset:0;
   background:
     linear-gradient(180deg, rgba(0,0,0,.55), rgba(0,0,0,.78)),
     url("https://tpc.com/wp-content/uploads/2020/04/Sawgrass1_1920x1200.jpg");
-  background-size:cover;background-position:center;z-index:-1;
+  background-size:cover;
+  background-position:center;
+  filter:saturate(1.12) contrast(1.02);
+  transform:scale(1.02);
+  z-index:-2;
 }
+.bg::after{
+  content:"";
+  position:absolute; inset:0;
+  background:
+    radial-gradient(1200px 700px at 50% -10%, rgba(215,197,138,.26), transparent 60%),
+    radial-gradient(900px 600px at 15% 110%, rgba(11,61,46,.35), transparent 60%);
+  z-index:-1;
+}
+
 .wrap{max-width:920px;margin:0 auto;padding:28px 16px 50px;}
 
 .header{
-  display:flex;justify-content:space-between;gap:16px;
-  padding:18px;border-radius:14px;
+  display:flex;align-items:flex-end;justify-content:space-between;gap:16px;
+  padding:18px 18px 14px;
   background:linear-gradient(180deg, rgba(11,61,46,.92), rgba(10,47,36,.86));
+  border:1px solid rgba(255,255,255,.10);
+  border-radius:14px;
+  box-shadow: 0 18px 45px rgba(0,0,0,.35);
 }
-.title h1{margin:0;font-size:16px;letter-spacing:.08em;text-transform:uppercase;color:var(--cream);}
-.title .sub{font-size:12px;color:var(--muted);}
-.meta{font-size:12px;color:var(--muted);text-align:right;}
-.meta strong{color:var(--gold);}
+.title{display:flex;flex-direction:column;gap:4px;min-width:0;}
+.title h1{
+  margin:0;font-weight:750;letter-spacing:.08em;text-transform:uppercase;
+  font-size:16px;color:var(--cream);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+.title .sub{font-size:12px;color:var(--muted);letter-spacing:.02em;}
+.meta{text-align:right;font-size:12px;color:var(--muted);line-height:1.4;white-space:nowrap;}
+.meta strong{color:var(--gold);font-weight:650;}
 
-.card{margin-top:14px;background:var(--card);border-radius:14px;overflow:hidden;}
+.card{
+  margin-top:14px;background:var(--card);
+  border:1px solid rgba(255,255,255,.10);
+  border-radius:14px;overflow:hidden;
+  box-shadow: 0 18px 45px rgba(0,0,0,.35);
+  backdrop-filter: blur(6px);
+}
 
-.controls{display:flex;justify-content:space-between;align-items:center;padding:12px 16px;border-bottom:1px solid var(--line);}
-.segment button{background:none;border:0;color:var(--muted);padding:6px 12px;cursor:pointer;font-size:12px;}
-.segment button.active{background:rgba(215,197,138,.2);color:var(--cream);border-radius:999px;}
+.controls{
+  display:flex;justify-content:space-between;align-items:center;gap:12px;
+  padding:12px 16px;border-bottom:1px solid var(--line);
+  background:linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,0));
+}
+.controls .label{font-size:12px;color:var(--muted);letter-spacing:.02em;}
+.segment{
+  display:inline-flex;border:1px solid rgba(255,255,255,.14);
+  border-radius:999px;overflow:hidden;background:rgba(0,0,0,.18);
+}
+.segment button{
+  border:0;background:transparent;color:var(--muted);
+  font-size:12px;letter-spacing:.10em;text-transform:uppercase;
+  padding:8px 12px;cursor:pointer;
+}
+.segment button.active{
+  background:rgba(215,197,138,.18);
+  color:var(--cream);
+  box-shadow: inset 0 0 0 1px rgba(215,197,138,.30);
+}
 
-.table-head,.row{display:grid;grid-template-columns:64px 1fr 160px;padding:14px 16px;align-items:center;}
-.table-head{font-size:12px;color:var(--muted);border-bottom:1px solid var(--line);}
-.row{border-bottom:1px solid var(--line);}
-.pos{color:var(--gold);font-weight:800;}
-.team .name{font-weight:650;}
+.table-head{
+  display:grid;grid-template-columns:64px 1fr 160px;
+  padding:12px 16px;border-bottom:1px solid var(--line);
+  font-size:12px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);
+}
+.row{
+  display:grid;grid-template-columns:64px 1fr 160px;
+  padding:14px 16px;border-bottom:1px solid var(--line);
+  align-items:center;
+}
+.row:last-child{border-bottom:none}
+.pos{font-variant-numeric:tabular-nums;color:var(--gold);font-weight:800;}
+.team{display:flex;flex-direction:column;gap:2px;min-width:0;}
+.team .name{font-size:16px;font-weight:650;color:var(--cream);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 .team .subline{font-size:12px;color:var(--muted);}
-.value{text-align:right;font-size:18px;font-weight:850;}
+.value{text-align:right;font-variant-numeric:tabular-nums;font-size:18px;font-weight:850;color:var(--cream);}
+.value .unit{font-size:12px;font-weight:650;color:var(--muted);margin-left:6px;letter-spacing:.10em;text-transform:uppercase;}
 
-.status{padding:10px 16px;font-size:12px;color:var(--muted);}
-.pill{display:inline-flex;align-items:center;gap:8px;padding:6px 10px;border-radius:999px;border:1px solid rgba(255,255,255,.15);}
-.dot{width:8px;height:8px;border-radius:50%;background:#7CFC98;}
-.dot.sync{background:#ffd166;}
+.status{
+  display:flex;gap:10px;align-items:center;justify-content:space-between;
+  padding:10px 16px 14px;color:var(--muted);font-size:12px;
+  border-top:1px solid rgba(255,255,255,.06);
+  background:linear-gradient(180deg, rgba(0,0,0,0), rgba(0,0,0,.08));
+}
+.pill{display:inline-flex;gap:8px;align-items:center;padding:6px 10px;border-radius:999px;border:1px solid rgba(255,255,255,.12);background:rgba(0,0,0,.18);}
+.dot{width:8px;height:8px;border-radius:50%;background:#7CFC98;box-shadow:0 0 0 3px rgba(124,252,152,.14);}
+.dot.sync{background:#ffd166;box-shadow:0 0 0 3px rgba(255,209,102,.14);}
 
-.card-title{padding:12px 16px;border-bottom:1px solid var(--line);font-size:12px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);}
-.schedule-head,.schedule-row{display:grid;grid-template-columns:160px 1fr;padding:14px 16px;}
-.schedule-head{font-size:12px;color:var(--muted);border-bottom:1px solid var(--line);}
+.card-title{
+  padding:12px 16px;border-bottom:1px solid var(--line);
+  font-size:12px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);
+  background:linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,0));
+}
+.schedule-head,.schedule-row{display:grid;grid-template-columns:160px 1fr;padding:14px 16px;align-items:center;}
+.schedule-head{border-bottom:1px solid var(--line);font-size:12px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);}
 .schedule-row{border-bottom:1px solid var(--line);}
 .schedule-row:last-child{border-bottom:none;}
 .month{font-weight:800;color:var(--gold);}
-.course{font-weight:650;color:var(--cream);}
+.course{font-weight:650;color:var(--cream);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+
+@media (max-width:520px){
+  .table-head,.row{grid-template-columns:48px 1fr 130px;}
+  .team .name{font-size:15px;}
+  .value{font-size:17px;}
+  .schedule-head,.schedule-row{grid-template-columns:120px 1fr;}
+  .controls{flex-direction:column;align-items:flex-start;}
+}
 </style>
 </head>
 
@@ -75,33 +151,33 @@ body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Aria
       <div class="sub" id="subHeader">Loading…</div>
     </div>
     <div class="meta">
-      Last update:<br><strong id="lastUpdate">—</strong>
+      Last update: <strong id="lastUpdate">—</strong><br/>
+      Refresh: <strong id="refreshRate">10s</strong>
     </div>
   </div>
 
   <!-- LEADERBOARD -->
-  <div class="card">
+  <div class="card" aria-live="polite">
     <div class="controls">
-      <div id="viewHint">View: Month</div>
-      <div class="segment">
-        <button id="btnMonth" class="active">Month</button>
-        <button id="btnSeason">Season</button>
+      <div class="label" id="viewHint">View: Month</div>
+      <div class="segment" role="tablist" aria-label="Leaderboard view">
+        <button id="btnMonth" type="button">Month</button>
+        <button id="btnSeason" type="button">Season</button>
+        <button id="btnPlayers" type="button">Players</button>
       </div>
     </div>
 
     <div class="table-head">
       <div>Pos</div>
-      <div>Team</div>
-      <div id="valHead">This Month</div>
+      <div id="nameHeader">Team</div>
+      <div id="valueHeader" style="text-align:right;">This Month</div>
     </div>
 
     <div id="rows"></div>
 
     <div class="status">
-      <span class="pill">
-        <span class="dot" id="dot"></span>
-        <span id="statusText">Syncing…</span>
-      </span>
+      <span class="pill"><span class="dot sync" id="dot"></span> <span id="statusText">Syncing…</span></span>
+      <span id="hint">Month = golf score • Season = points standings • Players = net avg</span>
     </div>
   </div>
 
@@ -119,209 +195,372 @@ body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Aria
 </div>
 
 <script>
-const SHEET_ID="1-Wo8A1lNGSMO6z85mLvxemk2CxP_tPihK9mEzTeesOA";
-const TAB_MONTHLY="MonthlyScores";
-const TAB_SEASON="SeasonPoints";
-const MONTHS=["January","February","March","April","May","June"];
-const REFRESH=10000;
+/* ================= CONFIG ================= */
+const SHEET_ID = "1-Wo8A1lNGSMO6z85mLvxemk2CxP_tPihK9mEzTeesOA";
+const TAB_MONTHLY = "MonthlyScores";
+const TAB_SEASON  = "SeasonPoints";
+const TAB_PLAYERS = "PlayerStandings"; // headers: Player Name | Team | Net Average | Rank
+const REFRESH_MS = 10000;
+const MONTHS = ["January","February","March","April","May","June"];
+/* ========================================= */
 
-const rowsEl=document.getElementById("rows");
-const statusText=document.getElementById("statusText");
-const dot=document.getElementById("dot");
-const subHeader=document.getElementById("subHeader");
-const lastUpdate=document.getElementById("lastUpdate");
-const btnMonth=document.getElementById("btnMonth");
-const btnSeason=document.getElementById("btnSeason");
-const valHead=document.getElementById("valHead");
-const viewHint=document.getElementById("viewHint");
+const URL_MONTHLY = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(TAB_MONTHLY)}`;
+const URL_SEASON  = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(TAB_SEASON)}`;
+const URL_PLAYERS = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(TAB_PLAYERS)}`;
 
-let currentView="month";
-let teams=[];
-let lastGoodTeams=[];
+const rowsEl = document.getElementById("rows");
+const lastUpdateEl = document.getElementById("lastUpdate");
+const refreshRateEl = document.getElementById("refreshRate");
+const statusTextEl = document.getElementById("statusText");
+const dotEl = document.getElementById("dot");
+const subHeaderEl = document.getElementById("subHeader");
+const btnMonth = document.getElementById("btnMonth");
+const btnSeason = document.getElementById("btnSeason");
+const btnPlayers = document.getElementById("btnPlayers");
+const viewHint = document.getElementById("viewHint");
+const valueHeader = document.getElementById("valueHeader");
+const nameHeader = document.getElementById("nameHeader");
 
-const norm=s=>String(s||"").trim().toLowerCase();
+refreshRateEl.textContent = Math.round(REFRESH_MS/1000) + "s";
 
-/* ✅ Clean a CSV cell: remove surrounding quotes + unescape "" */
+function setStatus(mode, text){
+  statusTextEl.textContent = text;
+  dotEl.classList.toggle("sync", mode === "sync");
+}
+
+function escapeHtml(str){
+  return String(str).replace(/[&<>"']/g, s => ({
+    "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"
+  })[s]);
+}
+
+const norm = s => String(s || "").trim().toLowerCase();
+
 function cleanCell(x){
   let s = String(x ?? "").trim();
-  if (s.startsWith('"') && s.endsWith('"')) {
-    s = s.slice(1,-1).replace(/""/g, '"');
-  }
+  if (s.startsWith('"') && s.endsWith('"')) s = s.slice(1,-1).replace(/""/g, '"');
   return s.trim();
 }
 
-/* Robust CSV parser + cell cleaning */
+/* robust CSV parser (handles quotes/commas) */
 function parseCSV(text){
-  const rows=[], row=[];
-  let cur="", q=false;
-  text=String(text).replace(/\uFEFF/g,"").replace(/\r/g,"");
-  for(let i=0;i<text.length;i++){
-    const c=text[i], n=text[i+1];
-    if(c=='"'){
-      if(q && n=='"'){cur+='"'; i++;}
-      else q=!q;
-    } else if(c==',' && !q){
+  const rows = [];
+  let row = [];
+  let cur = "";
+  let inQuotes = false;
+
+  text = String(text || "")
+    .replace(/\uFEFF/g, "")
+    .replace(/\r\n/g, "\n")
+    .replace(/\r/g, "\n");
+
+  for (let i=0;i<text.length;i++){
+    const ch = text[i];
+    const next = text[i+1];
+
+    if (ch === '"'){
+      if (inQuotes && next === '"'){ cur += '"'; i++; }
+      else inQuotes = !inQuotes;
+    } else if (ch === "," && !inQuotes){
       row.push(cur); cur="";
-    } else if(c=='\n' && !q){
-      row.push(cur);
-      rows.push(row.splice(0));
-      cur="";
-    } else {
-      cur+=c;
-    }
+    } else if (ch === "\n" && !inQuotes){
+      row.push(cur); rows.push(row); row=[]; cur="";
+    } else cur += ch;
   }
   row.push(cur); rows.push(row);
 
-  const headers = (rows[0]||[]).map(h=>cleanCell(h).toLowerCase());
-  const data = rows.slice(1).map(r=>r.map(cleanCell));
+  while (rows.length && rows[rows.length-1].every(c => String(c).trim() === "")) rows.pop();
+  if (rows.length < 2) return { headers: [], rows: [] };
+
+  const headers = rows[0].map(h => cleanCell(h).toLowerCase());
+  const data = rows.slice(1).map(r => r.map(cleanCell));
   return { headers, rows: data };
 }
 
 function numLoose(x){
-  const s=cleanCell(x).replace(/,/g,"").replace(/^\+/,"").trim();
-  if(!s) return null;
-  const n=Number(s);
-  return Number.isFinite(n)?n:null;
+  const s = cleanCell(x).replace(/,/g,"").replace(/^\+/,"").trim();
+  if (!s) return null;
+  const n = Number(s);
+  return Number.isFinite(n) ? n : null;
 }
 
-/* ✅ Monthly golf parsing (NOW works with quoted CSV like "E") */
+// golf score parsing: E or 0 => E, +n / -n => +n / -n, blank => —
 function parseGolf(raw){
   const s = cleanCell(raw);
-  if(!s) return {v:Number.POSITIVE_INFINITY, d:"—"};
-  if(s.toLowerCase()==="e") return {v:0, d:"E"};
-  if (/^[+-]?0+(\.0+)?$/.test(s)) return {v:0, d:"E"};
+  if (!s) return { value: Number.POSITIVE_INFINITY, display: "—" };
+  if (s.toLowerCase() === "e") return { value: 0, display: "E" };
+  if (/^[+-]?0+(\.0+)?$/.test(s)) return { value: 0, display: "E" };
 
   const n = numLoose(s);
-  if(n===null) return {v:Number.POSITIVE_INFINITY, d:"—"};
-  if(Object.is(n,-0) || n===0) return {v:0, d:"E"};
-  return {v:n, d:n>0?`+${n}`:`${n}`};
+  if (n === null) return { value: Number.POSITIVE_INFINITY, display: "—" };
+  if (Object.is(n, -0) || n === 0) return { value: 0, display: "E" };
+  return { value: n, display: (n > 0 ? `+${n}` : String(n)) };
 }
 
-/* Ties => T# */
-function applyTiePositions(sorted, keyFn){
-  const posLabels=new Array(sorted.length);
-  let i=0;
-  while(i<sorted.length){
-    let j=i+1;
-    const key=keyFn(sorted[i]);
-    while(j<sorted.length && keyFn(sorted[j])===key) j++;
-    const pos=i+1;
-    const label=(j-i>1)?`T${pos}`:`${pos}`;
-    for(let k=i;k<j;k++) posLabels[k]=label;
-    i=j;
+// tie labels: T# (Masters style)
+function tieLabels(sorted, keyFn){
+  const labels = new Array(sorted.length);
+  let i = 0;
+  while (i < sorted.length){
+    let j = i + 1;
+    const key = keyFn(sorted[i]);
+    while (j < sorted.length && keyFn(sorted[j]) === key) j++;
+    const pos = i + 1;
+    const label = (j - i > 1) ? `T${pos}` : `${pos}`;
+    for (let k = i; k < j; k++) labels[k] = label;
+    i = j;
   }
-  return posLabels;
+  return labels;
 }
 
-function currentMonth(){
-  return MONTHS[Math.min(new Date().getMonth(),5)];
+function getCurrentTourMonth(){
+  const idx = Math.min(Math.max(new Date().getMonth(), 0), 5);
+  return { index: idx, name: MONTHS[idx] };
 }
 
-function render(){
-  rowsEl.innerHTML="";
-  const sorted=[...teams];
+async function fetchTab(url){
+  const res = await fetch(url + (url.includes("?") ? "&" : "?") + "t=" + Date.now());
+  if (!res.ok) throw new Error("HTTP " + res.status);
+  return await res.text();
+}
 
-  if(currentView==="month"){
-    sorted.sort((a,b)=> (a.month.v-b.month.v) || (b.season-a.season) || a.team.localeCompare(b.team));
+/* ===== state ===== */
+let currentView = "month"; // month | season | players
+let currentMonth = getCurrentTourMonth();
+
+let teamData = [];          // canonical team list from MonthlyScores
+let playerData = [];        // canonical player list from PlayerStandings
+let lastGoodTeamData = [];
+let lastGoodPlayerData = [];
+
+/* ===== UI view helpers ===== */
+function applyViewUI(){
+  btnMonth.classList.toggle("active", currentView === "month");
+  btnSeason.classList.toggle("active", currentView === "season");
+  btnPlayers.classList.toggle("active", currentView === "players");
+
+  if (currentView === "players"){
+    viewHint.textContent = "View: Players";
+    nameHeader.textContent = "Player Name";
+    valueHeader.textContent = "Net Avg";
+    subHeaderEl.textContent = "Individual standings • Net average";
+  } else if (currentView === "season"){
+    viewHint.textContent = "View: Season";
+    nameHeader.textContent = "Team";
+    valueHeader.textContent = "Season Total";
+    subHeaderEl.textContent = `${currentMonth.name} • Points standings`;
   } else {
-    sorted.sort((a,b)=> (b.season-a.season) || (a.month.v-b.month.v) || a.team.localeCompare(b.team));
+    viewHint.textContent = "View: Month";
+    nameHeader.textContent = "Team";
+    valueHeader.textContent = "This Month";
+    subHeaderEl.textContent = `${currentMonth.name} • Golf scores`;
+  }
+}
+
+/* ===== render ===== */
+function render(){
+  applyViewUI();
+
+  rowsEl.innerHTML = "";
+
+  if (currentView === "players"){
+    if (!playerData.length) return;
+
+    const sorted = [...playerData].sort((a,b) =>
+      (a.rank - b.rank) ||
+      (a.netAvg - b.netAvg) ||
+      a.playerName.localeCompare(b.playerName)
+    );
+
+    const pos = tieLabels(sorted, p => p.rank);
+
+    sorted.forEach((p, idx) => {
+      const netDisp = Number.isFinite(p.netAvg) ? String(p.netAvg).replace(/\.0+$/,"").replace(/(\.\d*?)0+$/,"$1") : "—";
+      const row = document.createElement("div");
+      row.className = "row";
+      row.innerHTML = `
+        <div class="pos">${pos[idx]}</div>
+        <div class="team">
+          <div class="name" title="${escapeHtml(p.playerName)}">${escapeHtml(p.playerName)}</div>
+          <div class="subline">${escapeHtml(p.teamName || "—")}</div>
+        </div>
+        <div class="value">${escapeHtml(netDisp)}</div>
+      `;
+      rowsEl.appendChild(row);
+    });
+
+    return;
   }
 
-  const keyFn = currentView==="month" ? (t)=>t.month.v : (t)=>t.season;
-  const posLabels = applyTiePositions(sorted, keyFn);
+  if (!teamData.length) return;
 
-  sorted.forEach((t,idx)=>{
-    rowsEl.innerHTML+=`
-      <div class="row">
-        <div class="pos">${posLabels[idx]}</div>
-        <div class="team">
-          <div class="name">${t.team}</div>
-          <div class="subline">
-            ${currentView==="month" ? `Season: ${t.season} pts` : `This month: ${t.month.d}`}
-          </div>
-        </div>
-        <div class="value">
-          ${currentView==="month" ? t.month.d : t.season}
-        </div>
-      </div>`;
+  const sorted = [...teamData];
+
+  if (currentView === "month"){
+    sorted.sort((a,b)=>
+      (a.golfThisMonth.value - b.golfThisMonth.value) ||
+      (b.seasonTotalPoints - a.seasonTotalPoints) ||
+      a.team.localeCompare(b.team)
+    );
+  } else {
+    sorted.sort((a,b)=>
+      (b.seasonTotalPoints - a.seasonTotalPoints) ||
+      (a.golfThisMonth.value - b.golfThisMonth.value) ||
+      a.team.localeCompare(b.team)
+    );
+  }
+
+  const keyFn = currentView === "month" ? (t => t.golfThisMonth.value) : (t => t.seasonTotalPoints);
+  const pos = tieLabels(sorted, keyFn);
+
+  sorted.forEach((t, idx) => {
+    const big = (currentView === "month") ? t.golfThisMonth.display : String(t.seasonTotalPoints);
+    const sub = (currentView === "month")
+      ? `Season: ${t.seasonTotalPoints} pts`
+      : `This month: ${t.golfThisMonth.display}`;
+
+    const row = document.createElement("div");
+    row.className = "row";
+    row.innerHTML = `
+      <div class="pos">${pos[idx]}</div>
+      <div class="team">
+        <div class="name" title="${escapeHtml(t.team)}">${escapeHtml(t.team)}</div>
+        <div class="subline">${escapeHtml(sub)}</div>
+      </div>
+      <div class="value">${escapeHtml(big)}${currentView==="season" ? '<span class="unit">pts</span>' : ""}</div>
+    `;
+    rowsEl.appendChild(row);
   });
 }
 
-async function load(){
-  try{
-    dot.className="dot sync"; statusText.textContent="Syncing…";
-    const m=currentMonth().toLowerCase();
+/* ===== build data from CSVs ===== */
+function buildTeams(monthlyCSV, seasonCSV){
+  const month = currentMonth.name.toLowerCase();
 
-    const [a,b]=await Promise.all([
-      fetch(`https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(TAB_MONTHLY)}`).then(r=>r.text()),
-      fetch(`https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(TAB_SEASON)}`).then(r=>r.text())
-    ]);
+  const A = parseCSV(monthlyCSV);
+  const B = parseCSV(seasonCSV);
 
-    const A=parseCSV(a), B=parseCSV(b);
-    const ti=A.headers.indexOf("team"), mi=A.headers.indexOf(m);
+  const teamIdxA = A.headers.indexOf("team");
+  const monthIdxA = A.headers.indexOf(month);
+  if (teamIdxA === -1 || monthIdxA === -1) throw new Error("MonthlyScores missing: Team + " + currentMonth.name);
 
-    const seasonMap=new Map();
-    const sb=B.headers.indexOf("team");
+  const teamIdxB = B.headers.indexOf("team");
+  if (teamIdxB === -1) throw new Error("SeasonPoints missing: Team");
 
-    // Season total = sum of Jan–Jun (empty counts as 0)
-    B.rows.forEach(r=>{
-      const team=r[sb];
-      if(!team) return;
-      let total=0;
-      for(let i=1;i<r.length;i++){
-        const n=numLoose(r[i]);
-        total += (n===null ? 0 : n);
-      }
-      seasonMap.set(norm(team), total);
-    });
+  const seasonMap = new Map();
+  B.rows.forEach(r => {
+    const team = cleanCell(r[teamIdxB]);
+    if (!team) return;
 
-    const out=A.rows.map(r=>{
-      const team=r[ti];
-      if(!team) return null;
-      return {
-        team: cleanCell(team),
-        month: parseGolf(r[mi]),
-        season: seasonMap.get(norm(team)) ?? 0
-      };
-    }).filter(Boolean);
-
-    if(out.length){
-      teams=out;
-      lastGoodTeams=out;
-    } else {
-      teams=lastGoodTeams;
+    // sum all month columns (any numeric columns after Team)
+    let total = 0;
+    for (let i=1;i<r.length;i++){
+      const n = numLoose(r[i]);
+      total += (n === null ? 0 : n);
     }
 
-    render();
-    dot.className="dot"; statusText.textContent="Live";
-    lastUpdate.textContent=new Date().toLocaleString();
-    subHeader.textContent=`${currentMonth()} • ${currentView==="month"?"Golf scores":"Points standings"}`;
-  }catch{
-    teams=lastGoodTeams;
-    render();
-    dot.className="dot sync"; statusText.textContent="Syncing…";
+    seasonMap.set(norm(team), total);
+  });
+
+  const out = [];
+  A.rows.forEach(r => {
+    const team = cleanCell(r[teamIdxA]);
+    if (!team) return;
+
+    const golfThisMonth = parseGolf(r[monthIdxA]);
+    const seasonTotalPoints = seasonMap.get(norm(team)) ?? 0;
+
+    out.push({ team, golfThisMonth, seasonTotalPoints });
+  });
+
+  if (out.length){
+    teamData = out;
+    lastGoodTeamData = out;
+  } else if (lastGoodTeamData.length){
+    teamData = lastGoodTeamData;
   }
 }
 
-btnMonth.onclick=()=>{
-  currentView="month";
-  btnMonth.classList.add("active");
-  btnSeason.classList.remove("active");
-  valHead.textContent="This Month";
-  viewHint.textContent="View: Month";
-  load();
-};
-btnSeason.onclick=()=>{
-  currentView="season";
-  btnSeason.classList.add("active");
-  btnMonth.classList.remove("active");
-  valHead.textContent="Season Total";
-  viewHint.textContent="View: Season";
-  load();
-};
+function buildPlayers(playersCSV){
+  const P = parseCSV(playersCSV);
 
+  const pi = P.headers.indexOf("player name");
+  const ti = P.headers.indexOf("team");
+  const ni = P.headers.indexOf("net average");
+  const ri = P.headers.indexOf("rank");
+
+  if (pi === -1 || ti === -1 || ni === -1 || ri === -1){
+    throw new Error("PlayerStandings headers must be: Player Name | Team | Net Average | Rank");
+  }
+
+  const out = [];
+  P.rows.forEach(r => {
+    const playerName = cleanCell(r[pi]);
+    if (!playerName) return;
+
+    const teamName = cleanCell(r[ti]);
+    const rank = numLoose(r[ri]);
+    const netAvg = numLoose(r[ni]);
+
+    out.push({
+      playerName,
+      teamName,
+      rank: (rank === null ? 999999 : rank),
+      netAvg: (netAvg === null ? Number.POSITIVE_INFINITY : netAvg)
+    });
+  });
+
+  if (out.length){
+    playerData = out;
+    lastGoodPlayerData = out;
+  } else if (lastGoodPlayerData.length){
+    playerData = lastGoodPlayerData;
+  }
+}
+
+/* ===== load loop ===== */
+async function load(){
+  try{
+    setStatus("sync", "Syncing…");
+    currentMonth = getCurrentTourMonth();
+
+    const [monthlyCSV, seasonCSV, playersCSV] = await Promise.all([
+      fetchTab(URL_MONTHLY),
+      fetchTab(URL_SEASON),
+      fetchTab(URL_PLAYERS)
+    ]);
+
+    buildTeams(monthlyCSV, seasonCSV);
+    buildPlayers(playersCSV);
+
+    render();
+    lastUpdateEl.textContent = new Date().toLocaleString();
+    setStatus("", "Live");
+  } catch (e){
+    console.error(e);
+    // keep last good data visible
+    if (lastGoodTeamData.length) teamData = lastGoodTeamData;
+    if (lastGoodPlayerData.length) playerData = lastGoodPlayerData;
+    render();
+    setStatus("sync", "Syncing…");
+  }
+}
+
+/* ===== controls ===== */
+function setView(view){
+  currentView = view;
+  applyViewUI();
+  render();
+}
+
+btnMonth.addEventListener("click", () => setView("month"));
+btnSeason.addEventListener("click", () => setView("season"));
+btnPlayers.addEventListener("click", () => setView("players"));
+
+/* init */
+setView("month");
 load();
-setInterval(load,REFRESH);
+setInterval(load, REFRESH_MS);
 </script>
 </body>
 </html>
