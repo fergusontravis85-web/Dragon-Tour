@@ -348,24 +348,36 @@ async function fetchTab(url){
   return await res.text();
 }
 
-/* ===== movement tracking (per device/browser) ===== */
-const RANK_STORE_KEY = "dragonTour_rankDeltas_v2";
+/* ===== delta persistence until sheet changes ===== */
+const STORE_KEY = "dragonTour_deltaStore_v1";
 
-function loadRankStore(){
-  try { return JSON.parse(localStorage.getItem(RANK_STORE_KEY) || "{}"); }
+function loadStore(){
+  try { return JSON.parse(localStorage.getItem(STORE_KEY) || "{}"); }
   catch { return {}; }
 }
-function saveRankStore(obj){
-  try { localStorage.setItem(RANK_STORE_KEY, JSON.stringify(obj)); } catch {}
+function saveStore(obj){
+  try { localStorage.setItem(STORE_KEY, JSON.stringify(obj)); } catch {}
 }
-function getPrevMap(viewKey){
-  const store = loadRankStore();
-  return store[viewKey] || {};
+function getViewState(viewKey){
+  const s = loadStore();
+  return s[viewKey] || { prev:{}, fp:"" };
 }
-function setPrevMap(viewKey, map){
-  const store = loadRankStore();
-  store[viewKey] = map;
-  saveRankStore(store);
+function setViewState(viewKey, state){
+  const s = loadStore();
+  s[viewKey] = state;
+  saveStore(s);
+}
+function resetAllDeltas(){
+  try { localStorage.removeItem(STORE_KEY); } catch {}
+}
+function fingerprint(pairs){
+  const str = pairs.slice().sort().join("||");
+  let h = 2166136261;
+  for (let i=0;i<str.length;i++){
+    h ^= str.charCodeAt(i);
+    h = Math.imul(h, 16777619);
+  }
+  return (h >>> 0).toString(16);
 }
 function movementBadge(prevPos, currPos){
   if (!prevPos || !currPos) return "";
@@ -374,6 +386,27 @@ function movementBadge(prevPos, currPos){
   if (diff > 0) return `<span class="move up"><span class="tri">▲</span>${diff}</span>`;
   return `<span class="move down"><span class="tri">▼</span>${Math.abs(diff)}</span>`;
 }
+
+/* Reset tools:
+   - add ?reset=1 once to URL, OR
+   - press Shift+R (desktop)
+*/
+(function initReset(){
+  const qs = new URLSearchParams(location.search);
+  if (qs.get("reset") === "1"){
+    resetAllDeltas();
+    qs.delete("reset");
+    const newUrl = location.pathname + (qs.toString() ? ("?"+qs.toString()) : "");
+    history.replaceState(null,"",newUrl);
+  }
+  window.addEventListener("keydown", (e)=>{
+    if (e.shiftKey && (e.key === "R" || e.key === "r")){
+      resetAllDeltas();
+      setStatus("sync","Deltas reset");
+      setTimeout(()=>setStatus("", "Live"), 800);
+    }
+  });
+})();
 
 /* ===== state ===== */
 let currentView = "month"; // month | season | players
@@ -423,7 +456,10 @@ function render(){
     );
 
     const tie = tieLabels(sorted, p => p.rank);
-    const prev = getPrevMap("players");
+
+    const fp = fingerprint(sorted.map(p => `${norm(p.playerName)}|${p.rank}|${p.netAvg}`));
+    const st = getViewState("players");
+    const prev = st.prev || {};
     const next = {};
 
     sorted.forEach((p, idx) => {
@@ -449,7 +485,9 @@ function render(){
       rowsEl.appendChild(row);
     });
 
-    setPrevMap("players", next);
+    if (fp !== st.fp){
+      setViewState("players", { prev: next, fp });
+    }
     return;
   }
 
@@ -475,7 +513,12 @@ function render(){
   const keyFn = (currentView === "month") ? (t => t.golfThisMonth.value) : (t => t.seasonTotalPoints);
   const tie = tieLabels(sorted, keyFn);
 
-  const prev = getPrevMap(viewKey);
+  const fp = (viewKey === "month")
+    ? fingerprint(sorted.map(t => `${norm(t.team)}|${t.golfThisMonth.value}`))
+    : fingerprint(sorted.map(t => `${norm(t.team)}|${t.seasonTotalPoints}`));
+
+  const st = getViewState(viewKey);
+  const prev = st.prev || {};
   const next = {};
 
   sorted.forEach((t, idx) => {
@@ -502,7 +545,9 @@ function render(){
     rowsEl.appendChild(row);
   });
 
-  setPrevMap(viewKey, next);
+  if (fp !== st.fp){
+    setViewState(viewKey, { prev: next, fp });
+  }
 }
 
 /* ===== build data from CSVs ===== */
@@ -554,7 +599,6 @@ function buildTeams(monthlyCSV, seasonCSV){
 function buildPlayers(playersCSV){
   const P = parseCSV(playersCSV);
 
-  // headers: Player Name | Team | Net Average | Rank
   const pi = P.headers.indexOf("player name");
   const ti = P.headers.indexOf("team");
   const ni = P.headers.indexOf("net average");
@@ -627,7 +671,6 @@ btnSeason.addEventListener("click", () => setView("season"));
 btnPlayers.addEventListener("click", () => setView("players"));
 
 /* init */
-refreshRateEl.textContent = Math.round(REFRESH_MS/1000) + "s";
 setView("month");
 load();
 setInterval(load, REFRESH_MS);
