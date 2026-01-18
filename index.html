@@ -506,13 +506,14 @@ function render(){
       (b.seasonTotalPoints - a.seasonTotalPoints) ||
       a.team.localeCompare(b.team)
     );
-  } else {
-    sorted.sort((a,b)=>
-      (b.seasonTotalPoints - a.seasonTotalPoints) ||
-      (a.golfThisMonth.value - b.golfThisMonth.value) ||
-      a.team.localeCompare(b.team)
-    );
-  }
+} else {
+  // SEASON VIEW: rank only by season points.
+  // If tied, keep stable order by team name (so monthly changes don't affect season arrows).
+  sorted.sort((a,b)=>
+    (b.seasonTotalPoints - a.seasonTotalPoints) ||
+    a.team.localeCompare(b.team)
+  );
+}
 
   const viewKey = (currentView === "month") ? `month_${currentMonth.name}` : "season";
   const keyFn = (currentView === "month") ? (t => t.golfThisMonth.value) : (t => t.seasonTotalPoints);
