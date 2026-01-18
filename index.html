@@ -142,6 +142,7 @@ body{
 .pill{display:inline-flex;gap:8px;align-items:center;padding:6px 10px;border-radius:999px;border:1px solid rgba(255,255,255,.12);background:rgba(0,0,0,.18);}
 .dot{width:8px;height:8px;border-radius:50%;background:#7CFC98;box-shadow:0 0 0 3px rgba(124,252,152,.14);}
 .dot.sync{background:#ffd166;box-shadow:0 0 0 3px rgba(255,209,102,.14);}
+.dot.bad{background:#ff6b6b;box-shadow:0 0 0 3px rgba(255,107,107,.14);}
 
 /* Schedule */
 .card-title{
@@ -201,6 +202,7 @@ body{
 
     <div class="status">
       <span class="pill"><span class="dot sync" id="dot"></span> <span id="statusText">Syncing…</span></span>
+      <span id="errHint" style="display:none;"></span>
     </div>
   </div>
 
@@ -221,7 +223,7 @@ body{
 const SHEET_ID = "1-Wo8A1lNGSMO6z85mLvxemk2CxP_tPihK9mEzTeesOA";
 const TAB_MONTHLY = "MonthlyScores";
 const TAB_SEASON  = "SeasonPoints";
-const TAB_PLAYERS = "PlayerStandings"; // headers: Player Name | Team | Net Average | Rank
+const TAB_PLAYERS = "PlayerStandings";
 const REFRESH_MS = 10000;
 const MONTHS = ["January","February","March","April","May","June"];
 /* ========================================= */
@@ -242,12 +244,21 @@ const btnPlayers = document.getElementById("btnPlayers");
 const viewHint = document.getElementById("viewHint");
 const valueHeader = document.getElementById("valueHeader");
 const nameHeader = document.getElementById("nameHeader");
+const errHintEl = document.getElementById("errHint");
 
 refreshRateEl.textContent = Math.round(REFRESH_MS/1000) + "s";
 
-function setStatus(mode, text){
+function setStatus(mode, text, err){
   statusTextEl.textContent = text;
   dotEl.classList.toggle("sync", mode === "sync");
+  dotEl.classList.toggle("bad", mode === "bad");
+  if (err){
+    errHintEl.style.display = "inline";
+    errHintEl.textContent = err;
+  } else {
+    errHintEl.style.display = "none";
+    errHintEl.textContent = "";
+  }
 }
 
 function escapeHtml(str){
@@ -382,18 +393,20 @@ function movementBadge(prevPos, currPos){
   return `<span class="move down"><span class="tri">▼</span>${Math.abs(diff)}</span>`;
 }
 
-/* Stable fingerprints based on RAW data keyed by name (not sorted leaderboard order) */
-function fpTeamsMonth(){
-  return fingerprint(teamData.map(t => `${norm(t.team)}|${t.golfThisMonth.value}`));
-}
-function fpTeamsSeason(){
-  return fingerprint(teamData.map(t => `${norm(t.team)}|${t.seasonTotalPoints}`));
-}
-function fpPlayers(){
-  return fingerprint(playerData.map(p => `${norm(p.playerName)}|${p.rank}|${p.netAvg}`));
-}
+let currentView = "month"; // month | season | players
+let currentMonth = getCurrentTourMonth();
 
-/* Reset tools: ?reset=1 or Shift+R */
+let teamData = [];
+let playerData = [];
+let lastGoodTeamData = [];
+let lastGoodPlayerData = [];
+
+/* Stable fingerprints (raw keyed data) */
+function fpTeamsMonth(){ return fingerprint(teamData.map(t => `${norm(t.team)}|${t.golfThisMonth.value}`)); }
+function fpTeamsSeason(){ return fingerprint(teamData.map(t => `${norm(t.team)}|${t.seasonTotalPoints}`)); }
+function fpPlayers(){ return fingerprint(playerData.map(p => `${norm(p.playerName)}|${p.rank}|${p.netAvg}`)); }
+
+/* Reset: ?reset=1 or Shift+R */
 (function initReset(){
   const qs = new URLSearchParams(location.search);
   if (qs.get("reset") === "1"){
@@ -411,16 +424,6 @@ function fpPlayers(){
   });
 })();
 
-/* ===== state ===== */
-let currentView = "month"; // month | season | players
-let currentMonth = getCurrentTourMonth();
-
-let teamData = [];
-let playerData = [];
-let lastGoodTeamData = [];
-let lastGoodPlayerData = [];
-
-/* ===== UI view helpers ===== */
 function applyViewUI(){
   btnMonth.classList.toggle("active", currentView === "month");
   btnSeason.classList.toggle("active", currentView === "season");
@@ -444,7 +447,6 @@ function applyViewUI(){
   }
 }
 
-/* ===== render ===== */
 function render(){
   applyViewUI();
   rowsEl.innerHTML = "";
@@ -459,8 +461,8 @@ function render(){
     );
 
     const tie = tieLabels(sorted, p => p.rank);
-
     const fp = fpPlayers();
+
     const st = getViewState("players");
     const prev = st.prev || {};
     const next = {};
@@ -512,12 +514,9 @@ function render(){
     );
   }
 
-  /* IMPORTANT: month arrows are tracked per month */
   const viewKey = (currentView === "month") ? `month_${currentMonth.name}` : "season";
-
   const keyFn = (currentView === "month") ? (t => t.golfThisMonth.value) : (t => t.seasonTotalPoints);
   const tie = tieLabels(sorted, keyFn);
-
   const fp = (currentView === "month") ? fpTeamsMonth() : fpTeamsSeason();
 
   const st = getViewState(viewKey);
@@ -636,15 +635,16 @@ function buildPlayers(playersCSV){
   }
 }
 
-/* ===== load loop ===== */
+/* ===== NEW: fault-tolerant load (won't brick everything) ===== */
 async function load(){
   setStatus("sync", "Syncing…");
   currentMonth = getCurrentTourMonth();
 
   let teamsOk = false;
   let playersOk = false;
+  let errMsg = "";
 
-  // 1) Always try to load Month+Season together (core scoreboard)
+  // Month+Season (core)
   try{
     const [monthlyCSV, seasonCSV] = await Promise.all([
       fetchTab(URL_MONTHLY),
@@ -654,33 +654,32 @@ async function load(){
     teamsOk = true;
   } catch (e){
     console.error("Teams load failed:", e);
-    // fall back to last good teams if we have them
+    errMsg = String(e && e.message ? e.message : e);
     if (lastGoodTeamData.length) teamData = lastGoodTeamData;
   }
 
-  // 2) Try to load Players separately (won't break teams if it fails)
+  // Players (optional)
   try{
     const playersCSV = await fetchTab(URL_PLAYERS);
     buildPlayers(playersCSV);
     playersOk = true;
   } catch (e){
     console.error("Players load failed:", e);
+    if (!errMsg) errMsg = String(e && e.message ? e.message : e);
     if (lastGoodPlayerData.length) playerData = lastGoodPlayerData;
   }
 
-  // Render whatever we have
   render();
   lastUpdateEl.textContent = new Date().toLocaleString();
 
-  // Status messaging
   if (teamsOk && playersOk){
     setStatus("", "Live");
   } else if (teamsOk && !playersOk){
-    setStatus("", "Live (players offline)");
+    setStatus("bad", "Live (players offline)", errMsg);
   } else if (!teamsOk && playersOk){
-    setStatus("", "Live (teams offline)");
+    setStatus("bad", "Live (teams offline)", errMsg);
   } else {
-    setStatus("sync", "Offline / sheet mismatch");
+    setStatus("bad", "Offline / sheet mismatch", errMsg);
   }
 }
 
