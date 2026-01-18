@@ -181,7 +181,6 @@ body{
     </div>
   </div>
 
-  <!-- LEADERBOARD -->
   <div class="card" aria-live="polite">
     <div class="controls">
       <div class="label" id="viewHint">View: Month</div>
@@ -205,7 +204,6 @@ body{
     </div>
   </div>
 
-  <!-- SCHEDULE -->
   <div class="card">
     <div class="card-title">Season Schedule</div>
     <div class="schedule-head"><div>Month</div><div>Location</div></div>
@@ -266,7 +264,6 @@ function cleanCell(x){
   return s.trim();
 }
 
-/* robust CSV parser (handles quotes/commas) */
 function parseCSV(text){
   const rows = [];
   let row = [];
@@ -308,7 +305,6 @@ function numLoose(x){
   return Number.isFinite(n) ? n : null;
 }
 
-// golf score parsing: E or 0 => E, +n / -n => +n / -n, blank => —
 function parseGolf(raw){
   const s = cleanCell(raw);
   if (!s) return { value: Number.POSITIVE_INFINITY, display: "—" };
@@ -321,7 +317,6 @@ function parseGolf(raw){
   return { value: n, display: (n > 0 ? `+${n}` : String(n)) };
 }
 
-// tie labels: T# (Masters style)
 function tieLabels(sorted, keyFn){
   const labels = new Array(sorted.length);
   let i = 0;
@@ -348,8 +343,8 @@ async function fetchTab(url){
   return await res.text();
 }
 
-/* ===== delta persistence until sheet changes ===== */
-const STORE_KEY = "dragonTour_deltaStore_v1";
+/* ===== delta persistence until sheet changes (stable fingerprints) ===== */
+const STORE_KEY = "dragonTour_deltaStore_v2";
 
 function loadStore(){
   try { return JSON.parse(localStorage.getItem(STORE_KEY) || "{}"); }
@@ -381,16 +376,24 @@ function fingerprint(pairs){
 }
 function movementBadge(prevPos, currPos){
   if (!prevPos || !currPos) return "";
-  const diff = prevPos - currPos; // positive => moved UP
+  const diff = prevPos - currPos;
   if (diff === 0) return "";
   if (diff > 0) return `<span class="move up"><span class="tri">▲</span>${diff}</span>`;
   return `<span class="move down"><span class="tri">▼</span>${Math.abs(diff)}</span>`;
 }
 
-/* Reset tools:
-   - add ?reset=1 once to URL, OR
-   - press Shift+R (desktop)
-*/
+/* Stable fingerprints based on RAW data keyed by name (not sorted leaderboard order) */
+function fpTeamsMonth(){
+  return fingerprint(teamData.map(t => `${norm(t.team)}|${t.golfThisMonth.value}`));
+}
+function fpTeamsSeason(){
+  return fingerprint(teamData.map(t => `${norm(t.team)}|${t.seasonTotalPoints}`));
+}
+function fpPlayers(){
+  return fingerprint(playerData.map(p => `${norm(p.playerName)}|${p.rank}|${p.netAvg}`));
+}
+
+/* Reset tools: ?reset=1 or Shift+R */
 (function initReset(){
   const qs = new URLSearchParams(location.search);
   if (qs.get("reset") === "1"){
@@ -457,7 +460,7 @@ function render(){
 
     const tie = tieLabels(sorted, p => p.rank);
 
-    const fp = fingerprint(sorted.map(p => `${norm(p.playerName)}|${p.rank}|${p.netAvg}`));
+    const fp = fpPlayers();
     const st = getViewState("players");
     const prev = st.prev || {};
     const next = {};
@@ -509,13 +512,13 @@ function render(){
     );
   }
 
-  const viewKey = (currentView === "month") ? "month" : "season";
+  /* IMPORTANT: month arrows are tracked per month */
+  const viewKey = (currentView === "month") ? `month_${currentMonth.name}` : "season";
+
   const keyFn = (currentView === "month") ? (t => t.golfThisMonth.value) : (t => t.seasonTotalPoints);
   const tie = tieLabels(sorted, keyFn);
 
-  const fp = (viewKey === "month")
-    ? fingerprint(sorted.map(t => `${norm(t.team)}|${t.golfThisMonth.value}`))
-    : fingerprint(sorted.map(t => `${norm(t.team)}|${t.seasonTotalPoints}`));
+  const fp = (currentView === "month") ? fpTeamsMonth() : fpTeamsSeason();
 
   const st = getViewState(viewKey);
   const prev = st.prev || {};
