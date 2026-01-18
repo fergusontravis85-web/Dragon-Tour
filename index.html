@@ -346,12 +346,40 @@ function tieLabels(sorted, keyFn){
 function getCurrentTourMonth(){
   const idx = Math.min(Math.max(new Date().getMonth(), 0), 5);
   return { index: idx, name: MONTHS[idx] };
-}
 
+}
 async function fetchTab(url){
-  const res = await fetch(url + (url.includes("?") ? "&" : "?") + "t=" + Date.now());
-  if (!res.ok) throw new Error("HTTP " + res.status);
-  return await res.text();
+  const full = url + (url.includes("?") ? "&" : "?") + "t=" + Date.now();
+
+  // tiny retry for Google CSV hiccups (429/403/5xx or transient HTML)
+  for (let attempt = 1; attempt <= 2; attempt++){
+    const res = await fetch(full, { cache: "no-store" });
+
+    if (!res.ok){
+      // Retry once on common transient statuses
+      if (attempt === 1 && (res.status === 429 || res.status === 403 || res.status >= 500)){
+        await new Promise(r => setTimeout(r, 600));
+        continue;
+      }
+      throw new Error("HTTP " + res.status);
+    }
+
+    const text = await res.text();
+
+    // Google sometimes returns an HTML interstitial/login page instead of CSV
+    const looksLikeHtml = /<!doctype html|<html|<head|<body/i.test(text);
+    if (looksLikeHtml){
+      if (attempt === 1){
+        await new Promise(r => setTimeout(r, 600));
+        continue;
+      }
+      throw new Error("Non-CSV response (Google returned HTML)");
+    }
+
+    return text;
+  }
+
+  throw new Error("Fetch failed");
 }
 
 /* ===== delta persistence until sheet changes (stable fingerprints) ===== */
