@@ -638,28 +638,49 @@ function buildPlayers(playersCSV){
 
 /* ===== load loop ===== */
 async function load(){
+  setStatus("sync", "Syncing…");
+  currentMonth = getCurrentTourMonth();
+
+  let teamsOk = false;
+  let playersOk = false;
+
+  // 1) Always try to load Month+Season together (core scoreboard)
   try{
-    setStatus("sync", "Syncing…");
-    currentMonth = getCurrentTourMonth();
-
-    const [monthlyCSV, seasonCSV, playersCSV] = await Promise.all([
+    const [monthlyCSV, seasonCSV] = await Promise.all([
       fetchTab(URL_MONTHLY),
-      fetchTab(URL_SEASON),
-      fetchTab(URL_PLAYERS)
+      fetchTab(URL_SEASON)
     ]);
-
     buildTeams(monthlyCSV, seasonCSV);
-    buildPlayers(playersCSV);
-
-    render();
-    lastUpdateEl.textContent = new Date().toLocaleString();
-    setStatus("", "Live");
+    teamsOk = true;
   } catch (e){
-    console.error(e);
+    console.error("Teams load failed:", e);
+    // fall back to last good teams if we have them
     if (lastGoodTeamData.length) teamData = lastGoodTeamData;
+  }
+
+  // 2) Try to load Players separately (won't break teams if it fails)
+  try{
+    const playersCSV = await fetchTab(URL_PLAYERS);
+    buildPlayers(playersCSV);
+    playersOk = true;
+  } catch (e){
+    console.error("Players load failed:", e);
     if (lastGoodPlayerData.length) playerData = lastGoodPlayerData;
-    render();
-    setStatus("sync", "Syncing…");
+  }
+
+  // Render whatever we have
+  render();
+  lastUpdateEl.textContent = new Date().toLocaleString();
+
+  // Status messaging
+  if (teamsOk && playersOk){
+    setStatus("", "Live");
+  } else if (teamsOk && !playersOk){
+    setStatus("", "Live (players offline)");
+  } else if (!teamsOk && playersOk){
+    setStatus("", "Live (teams offline)");
+  } else {
+    setStatus("sync", "Offline / sheet mismatch");
   }
 }
 
