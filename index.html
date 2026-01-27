@@ -619,9 +619,8 @@ function buildTeams(monthlyCSV, seasonCSV){
   const B = parseCSV(seasonCSV);
 
   // tolerant headers
-  const teamIdxA = findHeaderIndex(A.headers, ["team","teams","team name","teamname"]);
+  const teamIdxA  = findHeaderIndex(A.headers, ["team","teams","team name","teamname"]);
   const monthIdxA = findHeaderIndex(A.headers, monthOptions(monthName));
-
   if (teamIdxA === -1 || monthIdxA === -1){
     throw new Error(
       `MonthlyScores missing required headers. Need TEAM + ${monthName}. Found: ${A.headers.join(" | ")}`
@@ -633,7 +632,18 @@ function buildTeams(monthlyCSV, seasonCSV){
     throw new Error(`SeasonPoints missing TEAM header. Found: ${B.headers.join(" | ")}`);
   }
 
-  // sum numeric columns except team col
+  // 1) Build map: team -> golf score for current month
+  const monthlyMap = new Map();
+  A.rows.forEach(r => {
+    const team = cleanCell(r[teamIdxA]);
+    if (!team) return;
+    monthlyMap.set(norm(team), {
+      team,
+      golfThisMonth: parseGolf(r[monthIdxA])
+    });
+  });
+
+  // 2) Build map: team -> season total points (sum numeric cols except team col)
   const seasonMap = new Map();
   B.rows.forEach(r => {
     const team = cleanCell(r[teamIdxB]);
@@ -645,18 +655,27 @@ function buildTeams(monthlyCSV, seasonCSV){
       const n = numLoose(r[i]);
       total += (n === null ? 0 : n);
     }
-    seasonMap.set(norm(team), total);
+    seasonMap.set(norm(team), { team, seasonTotalPoints: total });
   });
 
+  // 3) Union of teams (preserve MonthlyScores order first, then add missing from SeasonPoints)
+  const orderedKeys = [];
+  monthlyMap.forEach((_, k) => orderedKeys.push(k));
+  seasonMap.forEach((_, k) => {
+    if (!monthlyMap.has(k)) orderedKeys.push(k);
+  });
+
+  // 4) Build final list
   const out = [];
-  A.rows.forEach(r => {
-    const team = cleanCell(r[teamIdxA]);
-    if (!team) return;
+  orderedKeys.forEach(k => {
+    const m = monthlyMap.get(k);
+    const s = seasonMap.get(k);
 
-    const golfThisMonth = parseGolf(r[monthIdxA]);
-    const seasonTotalPoints = seasonMap.get(norm(team)) ?? 0;
-
-    out.push({ team, golfThisMonth, seasonTotalPoints });
+    out.push({
+      team: (m?.team || s?.team || k),
+      golfThisMonth: (m?.golfThisMonth || { value: Number.POSITIVE_INFINITY, display: "—" }),
+      seasonTotalPoints: (s?.seasonTotalPoints ?? 0)
+    });
   });
 
   if (out.length){
@@ -666,6 +685,7 @@ function buildTeams(monthlyCSV, seasonCSV){
     teamData = lastGoodTeamData;
   }
 }
+
 
 function buildPlayers(playersCSV){
   const P = parseCSV(playersCSV);
