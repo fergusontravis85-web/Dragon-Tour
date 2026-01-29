@@ -366,9 +366,8 @@ function parseCSV(text){
   row.push(cur); rows.push(row);
 
   while (rows.length && rows[rows.length-1].every(c => String(c).trim() === "")) rows.pop();
-  if (!rows.length) return { headers: [], rows: [] };
+  if (!rows.length) return { headers: [], rows: [], raw: [] };
 
-  // For roster tab we need raw grid; for others first row is headers.
   const cleaned = rows.map(r => r.map(cleanCell));
   const headers = (cleaned[0] || []).map(h => cleanCell(h).toLowerCase());
   const data = cleaned.slice(1);
@@ -445,67 +444,27 @@ async function fetchTab(url){
   throw new Error("Fetch failed");
 }
 
-/* ===== delta persistence until sheet changes (stable fingerprints) ===== */
+/* ===== delta persistence ===== */
 const STORE_KEY = "dragonTour_deltaStore_v4";
-
-function loadStore(){
-  try { return JSON.parse(localStorage.getItem(STORE_KEY) || "{}"); }
-  catch { return {}; }
-}
-function saveStore(obj){
-  try { localStorage.setItem(STORE_KEY, JSON.stringify(obj)); } catch {}
-}
-function getViewState(viewKey){
-  const s = loadStore();
-  return s[viewKey] || { prev:{}, fp:"" };
-}
-function setViewState(viewKey, state){
-  const s = loadStore();
-  s[viewKey] = state;
-  saveStore(s);
-}
-function resetAllDeltas(){
-  try { localStorage.removeItem(STORE_KEY); } catch {}
-}
+function loadStore(){ try { return JSON.parse(localStorage.getItem(STORE_KEY) || "{}"); } catch { return {}; } }
+function saveStore(obj){ try { localStorage.setItem(STORE_KEY, JSON.stringify(obj)); } catch {} }
+function getViewState(viewKey){ const s = loadStore(); return s[viewKey] || { prev:{}, fp:"" }; }
+function setViewState(viewKey, state){ const s = loadStore(); s[viewKey] = state; saveStore(s); }
 function fingerprint(pairs){
   const str = pairs.slice().sort().join("||");
   let h = 2166136261;
-  for (let i=0;i<str.length;i++){
-    h ^= str.charCodeAt(i);
-    h = Math.imul(h, 16777619);
-  }
+  for (let i=0;i<str.length;i++){ h ^= str.charCodeAt(i); h = Math.imul(h, 16777619); }
   return (h >>> 0).toString(16);
 }
 function movementBadge(prevPos, currPos){
   if (!prevPos || !currPos) return "";
-  const diff = prevPos - currPos; // positive => moved UP
+  const diff = prevPos - currPos;
   if (diff === 0) return "";
   if (diff > 0) return `<span class="move up"><span class="tri">▲</span>${diff}</span>`;
   return `<span class="move down"><span class="tri">▼</span>${Math.abs(diff)}</span>`;
 }
 
-/* Reset tools:
-   - add ?reset=1 once to URL, OR
-   - press Shift+R (desktop)
-*/
-(function initReset(){
-  const qs = new URLSearchParams(location.search);
-  if (qs.get("reset") === "1"){
-    resetAllDeltas();
-    qs.delete("reset");
-    const newUrl = location.pathname + (qs.toString() ? ("?"+qs.toString()) : "");
-    history.replaceState(null,"",newUrl);
-  }
-  window.addEventListener("keydown", (e)=>{
-    if (e.shiftKey && (e.key === "R" || e.key === "r")){
-      resetAllDeltas();
-      setStatus("sync","Deltas reset");
-      setTimeout(()=>setStatus("", "Live"), 800);
-    }
-  });
-})();
-
-/* ===== header matching helpers (tolerant) ===== */
+/* ===== header matching helpers ===== */
 function findHeaderIndex(headers, options){
   const set = new Set(options.map(s => String(s).trim().toLowerCase()));
   for (let i=0;i<headers.length;i++){
@@ -527,12 +486,12 @@ function monthOptions(monthName){
 }
 
 /* ===== state ===== */
-let currentView = "month"; // month | season | players | rosters
+let currentView = "month";
 let currentMonth = getCurrentTourMonth();
 
 let teamData = [];
 let playerData = [];
-let rosterCards = []; // [{team,captain,players[]}]
+let rosterCards = [];
 let lastGoodTeamData = [];
 let lastGoodPlayerData = [];
 
@@ -549,8 +508,6 @@ function applyViewUI(){
 
   if (showingRosters){
     viewHint.textContent = "View: Rosters";
-    nameHeader.textContent = "Team";
-    valueHeader.textContent = "";
     subHeaderEl.textContent = "Team rosters";
     return;
   }
@@ -594,7 +551,6 @@ function render(){
     );
 
     const tie = tieLabels(sorted, p => p.rank);
-
     const fp = fingerprint(playerData.map(p => `${norm(p.playerName)}|${p.rank}|${p.netAvg}`));
     const st = getViewState("players");
     const prev = st.prev || {};
@@ -640,16 +596,13 @@ function render(){
       a.team.localeCompare(b.team)
     );
   } else {
-    // Season view: ONLY season points, then stable name (prevents monthly edits affecting season arrows)
     sorted.sort((a,b)=>
       (b.seasonTotalPoints - a.seasonTotalPoints) ||
       a.team.localeCompare(b.team)
     );
   }
 
-  // Month arrows tracked per-month; Season tracked globally
   const viewKey = (currentView === "month") ? `month_${currentMonth.name}` : "season";
-
   const keyFn = (currentView === "month") ? (t => t.golfThisMonth.value) : (t => t.seasonTotalPoints);
   const tie = tieLabels(sorted, keyFn);
 
@@ -693,8 +646,6 @@ function render(){
 /* ===== Rosters rendering ===== */
 function renderRosters(){
   rostersGrid.innerHTML = "";
-
-  // Expect 5 rows (0..4) and up to 9 columns (0..8)
   rosterCards.forEach(card => {
     const div = document.createElement("div");
     div.className = "roster-card";
@@ -724,12 +675,15 @@ function buildTeams(monthlyCSV, seasonCSV){
     throw new Error(`SeasonPoints missing TEAM. Found: ${B.headers.join(" | ")}`);
   }
 
-  // Monthly map
+  // Monthly map (order preserved)
+  const monthlyKeys = [];
   const monthlyMap = new Map();
   A.rows.forEach(r => {
     const team = cleanCell(r[teamIdxA]);
     if (!team) return;
-    monthlyMap.set(norm(team), { team, golfThisMonth: parseGolf(r[monthIdxA]) });
+    const k = norm(team);
+    if (!monthlyMap.has(k)) monthlyKeys.push(k);
+    monthlyMap.set(k, { team, golfThisMonth: parseGolf(r[monthIdxA]) });
   });
 
   // Season map
@@ -746,9 +700,8 @@ function buildTeams(monthlyCSV, seasonCSV){
     seasonMap.set(norm(team), { team, seasonTotalPoints: total });
   });
 
-  // Union order: Monthly order first, then Season-only teams
-  const keys = [];
-  monthlyMap.forEach((_, k) => keys.push(k));
+  // Union order: Monthly first, then Season-only
+  const keys = [...monthlyKeys];
   seasonMap.forEach((_, k) => { if (!monthlyMap.has(k)) keys.push(k); });
 
   const out = [];
@@ -761,6 +714,9 @@ function buildTeams(monthlyCSV, seasonCSV){
       seasonTotalPoints: (s?.seasonTotalPoints ?? 0)
     });
   });
+
+  // ✅ HARD CAP: show only 9 teams
+  out.length = Math.min(out.length, 9);
 
   if (out.length){ teamData = out; lastGoodTeamData = out; }
   else if (lastGoodTeamData.length){ teamData = lastGoodTeamData; }
@@ -796,42 +752,26 @@ function buildPlayers(playersCSV){
 }
 
 function buildRosters(rostersCSV){
-  // rosters tab is a raw 5-row grid with 9 columns
-  const R = parseCSV(rostersCSV).raw; // includes all rows, no header assumption
-  // Ensure at least 5 rows
-  while (R.length < 5) R.push([]);
+  const raw = parseCSV(rostersCSV).raw; // raw grid (includes all rows)
+  while (raw.length < 5) raw.push([]);
 
-  // Determine max columns (at least 9)
-  let maxCols = 0;
-  for (let i=0;i<5;i++){
-    maxCols = Math.max(maxCols, (R[i] || []).length);
-  }
-  maxCols = Math.max(maxCols, 9);
-
+  // Use first 9 columns no matter what
+  const cols = 9;
   const cards = [];
-  for (let c=0;c<maxCols;c++){
-    const team = cleanCell((R[0] || [])[c]);
-    const captain = cleanCell((R[1] || [])[c]);
-    const p1 = cleanCell((R[2] || [])[c]);
-    const p2 = cleanCell((R[3] || [])[c]);
-    const p3 = cleanCell((R[4] || [])[c]);
 
-    // Only create a card if there's a team name OR any content in the column
-    if (!team && !captain && !p1 && !p2 && !p3) continue;
+  for (let c=0;c<cols;c++){
+    const team = cleanCell((raw[0] || [])[c]);
+    const captain = cleanCell((raw[1] || [])[c]);
+    const p1 = cleanCell((raw[2] || [])[c]);
+    const p2 = cleanCell((raw[3] || [])[c]);
+    const p3 = cleanCell((raw[4] || [])[c]);
 
     cards.push({
       team,
       captain,
-      players: [p1, p2, p3].filter((x, idx, arr) => true) // keep blanks as blank rows if you want; currently ok either way
+      players:[p1,p2,p3]
     });
   }
-
-  // Force exactly 9 cards if you want a clean 3x3 grid even with blanks:
-  // If you prefer that, uncomment this block:
-  /*
-  while (cards.length < 9) cards.push({team:"",captain:"",players:["","",""]});
-  cards.length = Math.min(cards.length, 9);
-  */
 
   rosterCards = cards;
 }
