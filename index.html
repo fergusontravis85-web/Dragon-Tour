@@ -145,19 +145,33 @@ body{
 .dot.sync{background:#ffd166;box-shadow:0 0 0 3px rgba(255,209,102,.14);}
 .dot.bad{background:#ff6b6b;box-shadow:0 0 0 3px rgba(255,107,107,.14);}
 
-/* Schedule */
-.card-title{
-  padding:12px 16px;border-bottom:1px solid var(--line);
-  font-size:12px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);
-  background:linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,0));
-}
-.schedule-head,.schedule-row{display:grid;grid-template-columns:160px 1fr;padding:14px 16px;align-items:center;}
-.schedule-head{border-bottom:1px solid var(--line);font-size:12px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);}
-.schedule-row{border-bottom:1px solid var(--line);}
-.schedule-row:last-child{border-bottom:none;}
-.month{font-weight:800;color:var(--gold);}
-.course{font-weight:650;color:var(--cream);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  <!-- SCHEDULE -->
+  <div class="card">
+    <div class="card-title">Season Schedule</div>
+    <div class="schedule-head">
+      <div>Month</div><div>Location</div><div>Format</div>
+    </div>
 
+    <div class="schedule-row">
+      <div class="month">January</div><div class="course">Viera East</div><div class="course">Scramble</div>
+    </div>
+    <div class="schedule-row">
+      <div class="month">February</div><div class="course">Duran</div><div class="course">Scramble</div>
+    </div>
+    <div class="schedule-row">
+      <div class="month">March</div><div class="course">Royal St Cloud</div><div class="course">Best Ball</div>
+    </div>
+    <div class="schedule-row">
+      <div class="month">April</div><div class="course">Duran Short Course</div><div class="course">Stroke Play</div>
+    </div>
+    <div class="schedule-row">
+      <div class="month">May</div><div class="course">Great Outdoors</div><div class="course">Match Play</div>
+    </div>
+    <div class="schedule-row">
+      <div class="month">June</div><div class="course">Manatee Cove</div><div class="course">Match Play</div>
+    </div>
+  </div>
+  
 /* Rosters grid (3x3 cards) */
 .rosters-wrap{padding:16px;}
 .rosters-grid{
