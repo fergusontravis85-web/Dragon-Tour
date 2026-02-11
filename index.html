@@ -24,7 +24,7 @@ body{
   overflow-x:hidden;
 }
 
-/* Background image */
+/* Background */
 .bg{
   position:fixed; inset:0;
   background:
@@ -32,8 +32,6 @@ body{
     url("https://tpc.com/wp-content/uploads/2020/04/Sawgrass1_1920x1200.jpg");
   background-size:cover;
   background-position:center;
-  filter:saturate(1.12) contrast(1.02);
-  transform:scale(1.02);
   z-index:-2;
 }
 .bg::after{
@@ -42,112 +40,139 @@ body{
   background:
     radial-gradient(1200px 700px at 50% -10%, rgba(215,197,138,.26), transparent 60%),
     radial-gradient(900px 600px at 15% 110%, rgba(11,61,46,.35), transparent 60%);
-  z-index:-1;
 }
 
 .wrap{max-width:920px;margin:0 auto;padding:28px 16px 50px;}
 
 /* Header */
 .header{
-  display:flex;align-items:flex-end;justify-content:space-between;gap:16px;
-  padding:18px 18px 14px;
+  display:flex;justify-content:space-between;align-items:flex-end;gap:16px;
+  padding:18px;
   background:linear-gradient(180deg, rgba(11,61,46,.92), rgba(10,47,36,.86));
-  border:1px solid rgba(255,255,255,.10);
   border-radius:14px;
-  box-shadow: 0 18px 45px rgba(0,0,0,.35);
 }
-.title{display:flex;flex-direction:column;gap:4px;min-width:0;}
 .title h1{
-  margin:0;font-weight:750;letter-spacing:.08em;text-transform:uppercase;
-  font-size:16px;color:var(--cream);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  margin:0;font-size:16px;letter-spacing:.08em;text-transform:uppercase;color:var(--cream);
 }
-.title .sub{font-size:12px;color:var(--muted);letter-spacing:.02em;}
-.meta{text-align:right;font-size:12px;color:var(--muted);line-height:1.4;white-space:nowrap;}
-.meta strong{color:var(--gold);font-weight:650;}
+.title .sub{font-size:12px;color:var(--muted);}
+.meta{font-size:12px;color:var(--muted);text-align:right;}
+.meta strong{color:var(--gold);}
 
 .card{
-  margin-top:14px;background:var(--card);
-  border:1px solid rgba(255,255,255,.10);
-  border-radius:14px;overflow:hidden;
-  box-shadow: 0 18px 45px rgba(0,0,0,.35);
-  backdrop-filter: blur(6px);
+  margin-top:14px;
+  background:var(--card);
+  border-radius:14px;
+  overflow:hidden;
 }
 
 /* Controls */
 .controls{
-  display:flex;justify-content:space-between;align-items:center;gap:12px;
+  display:flex;justify-content:space-between;gap:12px;
   padding:12px 16px;border-bottom:1px solid var(--line);
-  background:linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,0));
 }
-.controls .label{font-size:12px;color:var(--muted);letter-spacing:.02em;}
 .segment{
   display:inline-flex;border:1px solid rgba(255,255,255,.14);
-  border-radius:999px;overflow:hidden;background:rgba(0,0,0,.18);
-  flex-wrap:wrap;
+  border-radius:999px;overflow:hidden;
 }
 .segment button{
   border:0;background:transparent;color:var(--muted);
-  font-size:12px;letter-spacing:.10em;text-transform:uppercase;
+  font-size:12px;text-transform:uppercase;letter-spacing:.1em;
   padding:8px 12px;cursor:pointer;
 }
 .segment button.active{
   background:rgba(215,197,138,.18);
   color:var(--cream);
-  box-shadow: inset 0 0 0 1px rgba(215,197,138,.30);
 }
 
 /* Table */
-.table-head{
+.table-head,.row{
   display:grid;grid-template-columns:92px 1fr 160px;
+  padding:14px 16px;align-items:center;
+}
+.table-head{
+  font-size:12px;text-transform:uppercase;letter-spacing:.08em;
+  color:var(--muted);border-bottom:1px solid var(--line);
+}
+.row{border-bottom:1px solid var(--line);}
+.row:last-child{border-bottom:none;}
+
+.poscell{color:var(--gold);font-weight:900;}
+.team .name{font-size:16px;font-weight:650;color:var(--cream);}
+.team .subline{font-size:12px;color:var(--muted);}
+.value{text-align:right;font-size:18px;font-weight:850;}
+
+/* Schedule */
+.card-title{
   padding:12px 16px;border-bottom:1px solid var(--line);
   font-size:12px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);
 }
-.row{
-  display:grid;grid-template-columns:92px 1fr 160px;
-  padding:14px 16px;border-bottom:1px solid var(--line);
-  align-items:center;
+.schedule-head,.schedule-row{
+  display:grid;
+  grid-template-columns:140px 1fr 140px;
+  padding:14px 16px;align-items:center;
 }
-.row:last-child{border-bottom:none}
+.schedule-head{
+  border-bottom:1px solid var(--line);
+  font-size:12px;text-transform:uppercase;color:var(--muted);
+}
+.schedule-row{border-bottom:1px solid var(--line);}
+.schedule-row:last-child{border-bottom:none;}
+.month{color:var(--gold);font-weight:800;}
+.course{color:var(--cream);font-weight:650;}
 
-/* Position + movement */
-.poscell{
-  display:flex;align-items:center;gap:8px;
-  font-variant-numeric:tabular-nums;
-  color:var(--gold);
-  font-weight:900;
+@media (max-width:520px){
+  .schedule-head,.schedule-row{grid-template-columns:105px 1fr 110px;}
 }
-.move{
-  display:inline-flex;align-items:center;gap:4px;
-  font-size:12px;font-weight:900;
-  padding:2px 6px;border-radius:999px;
-  border:1px solid rgba(255,255,255,.14);
-  background:rgba(0,0,0,.18);
-  line-height:1;
-}
-.move.up{color:#7CFC98;}
-.move.down{color:#ff6b6b;}
-.move .tri{font-size:12px;line-height:1;position:relative;top:-0.5px;}
+</style>
+</head>
 
-.team{display:flex;flex-direction:column;gap:2px;min-width:0;}
-.team .name{font-size:16px;font-weight:650;color:var(--cream);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-.team .subline{font-size:12px;color:var(--muted);}
-.value{text-align:right;font-variant-numeric:tabular-nums;font-size:18px;font-weight:850;color:var(--cream);}
-.value .unit{font-size:12px;font-weight:650;color:var(--muted);margin-left:6px;letter-spacing:.10em;text-transform:uppercase;}
+<body>
+<div class="bg"></div>
 
-.status{
-  display:flex;gap:10px;align-items:center;justify-content:flex-start;
-  padding:10px 16px 14px;color:var(--muted);font-size:12px;
-  border-top:1px solid rgba(255,255,255,.06);
-  background:linear-gradient(180deg, rgba(0,0,0,0), rgba(0,0,0,.08));
-}
-.pill{display:inline-flex;gap:8px;align-items:center;padding:6px 10px;border-radius:999px;border:1px solid rgba(255,255,255,.12);background:rgba(0,0,0,.18);}
-.dot{width:8px;height:8px;border-radius:50%;background:#7CFC98;box-shadow:0 0 0 3px rgba(124,252,152,.14);}
-.dot.sync{background:#ffd166;box-shadow:0 0 0 3px rgba(255,209,102,.14);}
-.dot.bad{background:#ff6b6b;box-shadow:0 0 0 3px rgba(255,107,107,.14);}
+<div class="wrap">
+  <div class="header">
+    <div class="title">
+      <h1>Dragon Tour Leaderboard</h1>
+      <div class="sub">Live standings</div>
+    </div>
+    <div class="meta">
+      Last update: <strong id="lastUpdate">—</strong><br/>
+      Refresh: <strong>10s</strong>
+    </div>
+  </div>
+
+  <!-- MAIN CARD -->
+  <div class="card">
+    <div class="controls">
+      <div class="label">View</div>
+      <div class="segment">
+        <button class="active">Month</button>
+        <button>Season</button>
+        <button>Players</button>
+        <button>Rosters</button>
+      </div>
+    </div>
+
+    <div class="table-head">
+      <div>Pos</div>
+      <div>Team</div>
+      <div style="text-align:right;">This Month</div>
+    </div>
+
+    <div class="row">
+      <div class="poscell">1</div>
+      <div class="team">
+        <div class="name">Example Team</div>
+        <div class="subline">Season: 10 pts</div>
+      </div>
+      <div class="value">-2</div>
+    </div>
+  </div>
 
   <!-- SCHEDULE -->
   <div class="card">
     <div class="card-title">Season Schedule</div>
+
     <div class="schedule-head">
       <div>Month</div><div>Location</div><div>Format</div>
     </div>
@@ -171,688 +196,6 @@ body{
       <div class="month">June</div><div class="course">Manatee Cove</div><div class="course">Match Play</div>
     </div>
   </div>
-  
-/* Rosters grid (3x3 cards) */
-.rosters-wrap{padding:16px;}
-.rosters-grid{
-  display:grid;
-  grid-template-columns:repeat(3, 1fr);
-  gap:12px;
-}
-.roster-card{
-  border:1px solid rgba(255,255,255,.12);
-  background:rgba(0,0,0,.18);
-  border-radius:12px;
-  padding:12px 12px 10px;
-  min-height:150px;
-}
-.roster-team{
-  font-weight:900;
-  color:var(--gold);
-  letter-spacing:.06em;
-  text-transform:uppercase;
-  font-size:12px;
-  text-align:center;
-  margin-bottom:8px;
-}
-.roster-captain{
-  font-weight:900;
-  color:var(--cream);
-  text-align:center;
-  margin-bottom:8px;
-}
-.roster-player{
-  text-align:center;
-  color:var(--cream);
-  font-weight:650;
-  font-size:14px;
-  margin:2px 0;
-}
-.roster-player.muted{color:var(--muted); font-weight:650;}
-
-@media (max-width:760px){
-  .rosters-grid{grid-template-columns:repeat(2,1fr);}
-}
-@media (max-width:520px){
-  .table-head,.row{grid-template-columns:88px 1fr 130px;}
-  .team .name{font-size:15px;}
-  .value{font-size:17px;}
-  .schedule-head,.schedule-row{grid-template-columns:120px 1fr;}
-  .controls{flex-direction:column;align-items:flex-start;}
-  .rosters-grid{grid-template-columns:1fr;}
-}
-</style>
-</head>
-
-<body>
-<div class="bg"></div>
-
-<div class="wrap">
-  <div class="header">
-    <div class="title">
-      <h1>Dragon Tour Leaderboard</h1>
-      <div class="sub" id="subHeader">Loading…</div>
-    </div>
-    <div class="meta">
-      Last update: <strong id="lastUpdate">—</strong><br/>
-      Refresh: <strong id="refreshRate">10s</strong>
-    </div>
-  </div>
-
-  <!-- MAIN CARD -->
-  <div class="card" aria-live="polite">
-    <div class="controls">
-      <div class="label" id="viewHint">View: Month</div>
-      <div class="segment" role="tablist" aria-label="Leaderboard view">
-        <button id="btnMonth" type="button">Month</button>
-        <button id="btnSeason" type="button">Season</button>
-        <button id="btnPlayers" type="button">Players</button>
-        <button id="btnRosters" type="button">Rosters</button>
-      </div>
-    </div>
-
-    <!-- Leaderboard Table -->
-    <div id="leaderboardBlock">
-      <div class="table-head">
-        <div>Pos</div>
-        <div id="nameHeader">Team</div>
-        <div id="valueHeader" style="text-align:right;">This Month</div>
-      </div>
-      <div id="rows"></div>
-    </div>
-
-    <!-- Rosters -->
-    <div id="rostersBlock" style="display:none;">
-      <div class="card-title">Team Rosters</div>
-      <div class="rosters-wrap">
-        <div class="rosters-grid" id="rostersGrid"></div>
-      </div>
-    </div>
-
-    <div class="status">
-      <span class="pill"><span class="dot sync" id="dot"></span> <span id="statusText">Syncing…</span></span>
-      <span id="errHint" style="display:none;"></span>
-    </div>
-  </div>
-
-  <!-- SCHEDULE -->
-  <div class="card">
-    <div class="card-title">Season Schedule</div>
-    <div class="schedule-head"><div>Month</div><div>Location</div></div>
-    <div class="schedule-row"><div class="month">January</div><div class="course">Viera East</div></div>
-    <div class="schedule-row"><div class="month">February</div><div class="course">Duran</div></div>
-    <div class="schedule-row"><div class="month">March</div><div class="course">Royal St Cloud</div></div>
-    <div class="schedule-row"><div class="month">April</div><div class="course">Duran Short Course</div></div>
-    <div class="schedule-row"><div class="month">May</div><div class="course">Great Outdoors</div></div>
-    <div class="schedule-row"><div class="month">June</div><div class="course">Manatee Cove</div></div>
-  </div>
 </div>
-
-<script>
-/* ================= CONFIG ================= */
-const SHEET_ID = "1-Wo8A1lNGSMO6z85mLvxemk2CxP_tPihK9mEzTeesOA";
-const TAB_MONTHLY = "MonthlyScores";
-const TAB_SEASON  = "SeasonPoints";
-const TAB_PLAYERS = "PlayerStandings";
-const TAB_ROSTERS = "TeamRosters";     // 9 columns x 5 rows (Row1 teams, Row2 captains, Row3-5 players)
-const REFRESH_MS = 10000;
-const MONTHS = ["January","February","March","April","May","June"];
-/* ========================================= */
-
-const URL_MONTHLY = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(TAB_MONTHLY)}`;
-const URL_SEASON  = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(TAB_SEASON)}`;
-const URL_PLAYERS = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(TAB_PLAYERS)}`;
-const URL_ROSTERS = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(TAB_ROSTERS)}`;
-
-const rowsEl = document.getElementById("rows");
-const rostersGrid = document.getElementById("rostersGrid");
-const leaderboardBlock = document.getElementById("leaderboardBlock");
-const rostersBlock = document.getElementById("rostersBlock");
-
-const lastUpdateEl = document.getElementById("lastUpdate");
-const refreshRateEl = document.getElementById("refreshRate");
-const statusTextEl = document.getElementById("statusText");
-const dotEl = document.getElementById("dot");
-const subHeaderEl = document.getElementById("subHeader");
-const btnMonth = document.getElementById("btnMonth");
-const btnSeason = document.getElementById("btnSeason");
-const btnPlayers = document.getElementById("btnPlayers");
-const btnRosters = document.getElementById("btnRosters");
-const viewHint = document.getElementById("viewHint");
-const valueHeader = document.getElementById("valueHeader");
-const nameHeader = document.getElementById("nameHeader");
-const errHintEl = document.getElementById("errHint");
-
-refreshRateEl.textContent = Math.round(REFRESH_MS/1000) + "s";
-
-function setStatus(mode, text, err){
-  statusTextEl.textContent = text;
-  dotEl.classList.toggle("sync", mode === "sync");
-  dotEl.classList.toggle("bad", mode === "bad");
-  if (err){
-    errHintEl.style.display = "inline";
-    errHintEl.textContent = err;
-  } else {
-    errHintEl.style.display = "none";
-    errHintEl.textContent = "";
-  }
-}
-
-function escapeHtml(str){
-  return String(str).replace(/[&<>"']/g, s => ({
-    "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"
-  })[s]);
-}
-
-const norm = s => String(s || "").trim().toLowerCase();
-
-function cleanCell(x){
-  let s = String(x ?? "").trim();
-  if (s.startsWith('"') && s.endsWith('"')) s = s.slice(1,-1).replace(/""/g, '"');
-  return s.trim();
-}
-
-/* robust CSV parser (handles quotes/commas) */
-function parseCSV(text){
-  const rows = [];
-  let row = [];
-  let cur = "";
-  let inQuotes = false;
-
-  text = String(text || "")
-    .replace(/\uFEFF/g, "")
-    .replace(/\r\n/g, "\n")
-    .replace(/\r/g, "\n");
-
-  for (let i=0;i<text.length;i++){
-    const ch = text[i];
-    const next = text[i+1];
-
-    if (ch === '"'){
-      if (inQuotes && next === '"'){ cur += '"'; i++; }
-      else inQuotes = !inQuotes;
-    } else if (ch === "," && !inQuotes){
-      row.push(cur); cur="";
-    } else if (ch === "\n" && !inQuotes){
-      row.push(cur); rows.push(row); row=[]; cur="";
-    } else cur += ch;
-  }
-  row.push(cur); rows.push(row);
-
-  while (rows.length && rows[rows.length-1].every(c => String(c).trim() === "")) rows.pop();
-  if (!rows.length) return { headers: [], rows: [], raw: [] };
-
-  const cleaned = rows.map(r => r.map(cleanCell));
-  const headers = (cleaned[0] || []).map(h => cleanCell(h).toLowerCase());
-  const data = cleaned.slice(1);
-  return { raw: cleaned, headers, rows: data };
-}
-
-function numLoose(x){
-  const s = cleanCell(x).replace(/,/g,"").replace(/^\+/,"").trim();
-  if (!s) return null;
-  const n = Number(s);
-  return Number.isFinite(n) ? n : null;
-}
-
-// golf score parsing: E or 0 => E, +n / -n => +n / -n, blank => —
-function parseGolf(raw){
-  const s = cleanCell(raw);
-  if (!s) return { value: Number.POSITIVE_INFINITY, display: "—" };
-  if (s.toLowerCase() === "e") return { value: 0, display: "E" };
-  if (/^[+-]?0+(\.0+)?$/.test(s)) return { value: 0, display: "E" };
-
-  const n = numLoose(s);
-  if (n === null) return { value: Number.POSITIVE_INFINITY, display: "—" };
-  if (Object.is(n, -0) || n === 0) return { value: 0, display: "E" };
-  return { value: n, display: (n > 0 ? `+${n}` : String(n)) };
-}
-
-// tie labels: T# (Masters style)
-function tieLabels(sorted, keyFn){
-  const labels = new Array(sorted.length);
-  let i = 0;
-  while (i < sorted.length){
-    let j = i + 1;
-    const key = keyFn(sorted[i]);
-    while (j < sorted.length && keyFn(sorted[j]) === key) j++;
-    const pos = i + 1;
-    const label = (j - i > 1) ? `T${pos}` : `${pos}`;
-    for (let k = i; k < j; k++) labels[k] = label;
-    i = j;
-  }
-  return labels;
-}
-
-function getCurrentTourMonth(){
-  const idx = Math.min(Math.max(new Date().getMonth(), 0), 5);
-  return { index: idx, name: MONTHS[idx] };
-}
-
-/* Fetch with small retry + HTML guard (Google CSV hiccups) */
-async function fetchTab(url){
-  const full = url + (url.includes("?") ? "&" : "?") + "t=" + Date.now();
-  for (let attempt = 1; attempt <= 2; attempt++){
-    const res = await fetch(full, { cache: "no-store" });
-
-    if (!res.ok){
-      if (attempt === 1 && (res.status === 429 || res.status === 403 || res.status >= 500)){
-        await new Promise(r => setTimeout(r, 600));
-        continue;
-      }
-      throw new Error("HTTP " + res.status);
-    }
-
-    const text = await res.text();
-    const looksLikeHtml = /<!doctype html|<html|<head|<body/i.test(text);
-    if (looksLikeHtml){
-      if (attempt === 1){
-        await new Promise(r => setTimeout(r, 600));
-        continue;
-      }
-      throw new Error("Non-CSV response (Google returned HTML)");
-    }
-
-    return text;
-  }
-  throw new Error("Fetch failed");
-}
-
-/* ===== delta persistence ===== */
-const STORE_KEY = "dragonTour_deltaStore_v4";
-function loadStore(){ try { return JSON.parse(localStorage.getItem(STORE_KEY) || "{}"); } catch { return {}; } }
-function saveStore(obj){ try { localStorage.setItem(STORE_KEY, JSON.stringify(obj)); } catch {} }
-function getViewState(viewKey){ const s = loadStore(); return s[viewKey] || { prev:{}, fp:"" }; }
-function setViewState(viewKey, state){ const s = loadStore(); s[viewKey] = state; saveStore(s); }
-function fingerprint(pairs){
-  const str = pairs.slice().sort().join("||");
-  let h = 2166136261;
-  for (let i=0;i<str.length;i++){ h ^= str.charCodeAt(i); h = Math.imul(h, 16777619); }
-  return (h >>> 0).toString(16);
-}
-function movementBadge(prevPos, currPos){
-  if (!prevPos || !currPos) return "";
-  const diff = prevPos - currPos;
-  if (diff === 0) return "";
-  if (diff > 0) return `<span class="move up"><span class="tri">▲</span>${diff}</span>`;
-  return `<span class="move down"><span class="tri">▼</span>${Math.abs(diff)}</span>`;
-}
-
-/* ===== header matching helpers ===== */
-function findHeaderIndex(headers, options){
-  const set = new Set(options.map(s => String(s).trim().toLowerCase()));
-  for (let i=0;i<headers.length;i++){
-    const h = String(headers[i] || "").trim().toLowerCase();
-    if (set.has(h)) return i;
-  }
-  for (let i=0;i<headers.length;i++){
-    const h = String(headers[i] || "").trim().toLowerCase();
-    for (const opt of set){
-      if (h.startsWith(opt)) return i;
-    }
-  }
-  return -1;
-}
-function monthOptions(monthName){
-  const m = String(monthName || "").trim().toLowerCase();
-  const abbr = m.slice(0,3);
-  return [m, abbr];
-}
-
-/* ===== state ===== */
-let currentView = "month";
-let currentMonth = getCurrentTourMonth();
-
-let teamData = [];
-let playerData = [];
-let rosterCards = [];
-let lastGoodTeamData = [];
-let lastGoodPlayerData = [];
-
-/* ===== UI view helpers ===== */
-function applyViewUI(){
-  btnMonth.classList.toggle("active", currentView === "month");
-  btnSeason.classList.toggle("active", currentView === "season");
-  btnPlayers.classList.toggle("active", currentView === "players");
-  btnRosters.classList.toggle("active", currentView === "rosters");
-
-  const showingRosters = currentView === "rosters";
-  leaderboardBlock.style.display = showingRosters ? "none" : "block";
-  rostersBlock.style.display = showingRosters ? "block" : "none";
-
-  if (showingRosters){
-    viewHint.textContent = "View: Rosters";
-    subHeaderEl.textContent = "Team rosters";
-    return;
-  }
-
-  if (currentView === "players"){
-    viewHint.textContent = "View: Players";
-    nameHeader.textContent = "Player Name";
-    valueHeader.textContent = "Net Avg";
-    subHeaderEl.textContent = "Individual standings • Net average";
-  } else if (currentView === "season"){
-    viewHint.textContent = "View: Season";
-    nameHeader.textContent = "Team";
-    valueHeader.textContent = "Season Total";
-    subHeaderEl.textContent = `${currentMonth.name} • Points standings`;
-  } else {
-    viewHint.textContent = "View: Month";
-    nameHeader.textContent = "Team";
-    valueHeader.textContent = "This Month";
-    subHeaderEl.textContent = `${currentMonth.name} • Golf scores`;
-  }
-}
-
-/* ===== render ===== */
-function render(){
-  applyViewUI();
-
-  if (currentView === "rosters"){
-    renderRosters();
-    return;
-  }
-
-  rowsEl.innerHTML = "";
-
-  if (currentView === "players"){
-    if (!playerData.length) return;
-
-    const sorted = [...playerData].sort((a,b) =>
-      (a.rank - b.rank) ||
-      (a.netAvg - b.netAvg) ||
-      a.playerName.localeCompare(b.playerName)
-    );
-
-    const tie = tieLabels(sorted, p => p.rank);
-    const fp = fingerprint(playerData.map(p => `${norm(p.playerName)}|${p.rank}|${p.netAvg}`));
-    const st = getViewState("players");
-    const prev = st.prev || {};
-    const next = {};
-
-    sorted.forEach((p, idx) => {
-      const currPos = idx + 1;
-      const key = norm(p.playerName);
-      const badge = movementBadge(prev[key], currPos);
-      next[key] = currPos;
-
-      const netDisp = Number.isFinite(p.netAvg) && p.netAvg !== Number.POSITIVE_INFINITY
-        ? String(p.netAvg).replace(/\.0+$/,"").replace(/(\.\d*?)0+$/,"$1")
-        : "—";
-
-      const row = document.createElement("div");
-      row.className = "row";
-      row.innerHTML = `
-        <div class="poscell">${escapeHtml(tie[idx])} ${badge}</div>
-        <div class="team">
-          <div class="name" title="${escapeHtml(p.playerName)}">${escapeHtml(p.playerName)}</div>
-          <div class="subline">${escapeHtml(p.teamName || "—")}</div>
-        </div>
-        <div class="value">${escapeHtml(netDisp)}</div>
-      `;
-      rowsEl.appendChild(row);
-    });
-
-    if (fp !== st.fp){
-      setViewState("players", { prev: next, fp });
-    }
-    return;
-  }
-
-  if (!teamData.length) return;
-
-  const sorted = [...teamData];
-
-  if (currentView === "month"){
-    sorted.sort((a,b)=>
-      (a.golfThisMonth.value - b.golfThisMonth.value) ||
-      (b.seasonTotalPoints - a.seasonTotalPoints) ||
-      a.team.localeCompare(b.team)
-    );
-  } else {
-    sorted.sort((a,b)=>
-      (b.seasonTotalPoints - a.seasonTotalPoints) ||
-      a.team.localeCompare(b.team)
-    );
-  }
-
-  const viewKey = (currentView === "month") ? `month_${currentMonth.name}` : "season";
-  const keyFn = (currentView === "month") ? (t => t.golfThisMonth.value) : (t => t.seasonTotalPoints);
-  const tie = tieLabels(sorted, keyFn);
-
-  const fp = (currentView === "month")
-    ? fingerprint(teamData.map(t => `${norm(t.team)}|${t.golfThisMonth.value}`))
-    : fingerprint(teamData.map(t => `${norm(t.team)}|${t.seasonTotalPoints}`));
-
-  const st = getViewState(viewKey);
-  const prev = st.prev || {};
-  const next = {};
-
-  sorted.forEach((t, idx) => {
-    const currPos = idx + 1;
-    const key = norm(t.team);
-    const badge = movementBadge(prev[key], currPos);
-    next[key] = currPos;
-
-    const big = (currentView === "month") ? t.golfThisMonth.display : String(t.seasonTotalPoints);
-    const sub = (currentView === "month")
-      ? `Season: ${t.seasonTotalPoints} pts`
-      : `This month: ${t.golfThisMonth.display}`;
-
-    const row = document.createElement("div");
-    row.className = "row";
-    row.innerHTML = `
-      <div class="poscell">${escapeHtml(tie[idx])} ${badge}</div>
-      <div class="team">
-        <div class="name" title="${escapeHtml(t.team)}">${escapeHtml(t.team)}</div>
-        <div class="subline">${escapeHtml(sub)}</div>
-      </div>
-      <div class="value">${escapeHtml(big)}${currentView==="season" ? '<span class="unit">pts</span>' : ""}</div>
-    `;
-    rowsEl.appendChild(row);
-  });
-
-  if (fp !== st.fp){
-    setViewState(viewKey, { prev: next, fp });
-  }
-}
-
-/* ===== Rosters rendering ===== */
-function renderRosters(){
-  rostersGrid.innerHTML = "";
-  rosterCards.forEach(card => {
-    const div = document.createElement("div");
-    div.className = "roster-card";
-    div.innerHTML = `
-      <div class="roster-team">${escapeHtml(card.team || "—")}</div>
-      <div class="roster-captain">${escapeHtml(card.captain || "—")}</div>
-      ${(card.players || []).map(p => `<div class="roster-player ${p ? "" : "muted"}">${escapeHtml(p || "")}</div>`).join("")}
-    `;
-    rostersGrid.appendChild(div);
-  });
-}
-
-/* ===== build data from CSVs ===== */
-function buildTeams(monthlyCSV, seasonCSV){
-  const monthName = currentMonth.name;
-  const A = parseCSV(monthlyCSV);
-  const B = parseCSV(seasonCSV);
-
-  const teamIdxA  = findHeaderIndex(A.headers, ["team","teams","team name","teamname"]);
-  const monthIdxA = findHeaderIndex(A.headers, monthOptions(monthName));
-  if (teamIdxA === -1 || monthIdxA === -1){
-    throw new Error(`MonthlyScores missing TEAM + ${monthName}. Found: ${A.headers.join(" | ")}`);
-  }
-
-  const teamIdxB = findHeaderIndex(B.headers, ["team","teams","team name","teamname"]);
-  if (teamIdxB === -1){
-    throw new Error(`SeasonPoints missing TEAM. Found: ${B.headers.join(" | ")}`);
-  }
-
-  // Monthly map (order preserved)
-  const monthlyKeys = [];
-  const monthlyMap = new Map();
-  A.rows.forEach(r => {
-    const team = cleanCell(r[teamIdxA]);
-    if (!team) return;
-    const k = norm(team);
-    if (!monthlyMap.has(k)) monthlyKeys.push(k);
-    monthlyMap.set(k, { team, golfThisMonth: parseGolf(r[monthIdxA]) });
-  });
-
-  // Season map
-  const seasonMap = new Map();
-  B.rows.forEach(r => {
-    const team = cleanCell(r[teamIdxB]);
-    if (!team) return;
-    let total = 0;
-    for (let i=0;i<r.length;i++){
-      if (i === teamIdxB) continue;
-      const n = numLoose(r[i]);
-      total += (n === null ? 0 : n);
-    }
-    seasonMap.set(norm(team), { team, seasonTotalPoints: total });
-  });
-
-  // Union order: Monthly first, then Season-only
-  const keys = [...monthlyKeys];
-  seasonMap.forEach((_, k) => { if (!monthlyMap.has(k)) keys.push(k); });
-
-  const out = [];
-  keys.forEach((k, i) => {
-    const m = monthlyMap.get(k);
-    const s = seasonMap.get(k);
-    out.push({
-      team: (m?.team || s?.team || k),
-      golfThisMonth: (m?.golfThisMonth || { value: Number.POSITIVE_INFINITY, display: "—" }),
-      seasonTotalPoints: (s?.seasonTotalPoints ?? 0),
-      baseIdx: i
-    });
-  });
-
-  // ✅ HARD CAP: show only 9 teams
-  out.length = Math.min(out.length, 9);
-
-  if (out.length){ teamData = out; lastGoodTeamData = out; }
-  else if (lastGoodTeamData.length){ teamData = lastGoodTeamData; }
-}
-
-function buildPlayers(playersCSV){
-  const P = parseCSV(playersCSV);
-
-  const pi = findHeaderIndex(P.headers, ["player name","player","name"]);
-  const ti = findHeaderIndex(P.headers, ["team","team name","teamname"]);
-  const ni = findHeaderIndex(P.headers, ["net average","net avg","net"]);
-  const ri = findHeaderIndex(P.headers, ["rank","position","pos"]);
-
-  if (pi === -1 || ti === -1 || ni === -1 || ri === -1){
-    throw new Error("PlayerStandings headers must include: Player Name | Team | Net Average | Rank");
-  }
-
-  const out = [];
-  P.rows.forEach(r => {
-    const playerName = cleanCell(r[pi]);
-    if (!playerName) return;
-
-    out.push({
-      playerName,
-      teamName: cleanCell(r[ti]),
-      rank: (numLoose(r[ri]) ?? 999999),
-      netAvg: (numLoose(r[ni]) ?? Number.POSITIVE_INFINITY)
-    });
-  });
-
-  if (out.length){ playerData = out; lastGoodPlayerData = out; }
-  else if (lastGoodPlayerData.length){ playerData = lastGoodPlayerData; }
-}
-
-function buildRosters(rostersCSV){
-  const raw = parseCSV(rostersCSV).raw; // raw grid (includes all rows)
-  while (raw.length < 5) raw.push([]);
-
-  // Use first 9 columns no matter what
-  const cols = 9;
-  const cards = [];
-
-  for (let c=0;c<cols;c++){
-    const team = cleanCell((raw[0] || [])[c]);
-    const captain = cleanCell((raw[1] || [])[c]);
-    const p1 = cleanCell((raw[2] || [])[c]);
-    const p2 = cleanCell((raw[3] || [])[c]);
-    const p3 = cleanCell((raw[4] || [])[c]);
-
-    cards.push({
-      team,
-      captain,
-      players:[p1,p2,p3]
-    });
-  }
-
-  rosterCards = cards;
-}
-
-/* ===== load loop (fault-tolerant) ===== */
-async function load(){
-  setStatus("sync", "Syncing…");
-  currentMonth = getCurrentTourMonth();
-
-  let teamsOk=false, playersOk=false, rostersOk=false;
-  let errMsg="";
-
-  try{
-    const [monthlyCSV, seasonCSV] = await Promise.all([fetchTab(URL_MONTHLY), fetchTab(URL_SEASON)]);
-    buildTeams(monthlyCSV, seasonCSV);
-    teamsOk=true;
-  }catch(e){
-    console.error("Teams load failed:", e);
-    errMsg = e?.message || String(e);
-    if (lastGoodTeamData.length) teamData = lastGoodTeamData;
-  }
-
-  try{
-    const playersCSV = await fetchTab(URL_PLAYERS);
-    buildPlayers(playersCSV);
-    playersOk=true;
-  }catch(e){
-    console.error("Players load failed:", e);
-    if (!errMsg) errMsg = e?.message || String(e);
-    if (lastGoodPlayerData.length) playerData = lastGoodPlayerData;
-  }
-
-  try{
-    const rostersCSV = await fetchTab(URL_ROSTERS);
-    buildRosters(rostersCSV);
-    rostersOk=true;
-  }catch(e){
-    console.error("Rosters load failed:", e);
-    if (!errMsg) errMsg = e?.message || String(e);
-  }
-
-  render();
-  lastUpdateEl.textContent = new Date().toLocaleString();
-
-  if (teamsOk && playersOk && rostersOk){
-    setStatus("", "Live");
-  } else {
-    setStatus("bad", "Live (partial)", errMsg || "One tab failed to sync");
-  }
-}
-
-/* ===== controls ===== */
-function setView(view){
-  currentView = view;
-  applyViewUI();
-  render();
-}
-btnMonth.addEventListener("click", () => setView("month"));
-btnSeason.addEventListener("click", () => setView("season"));
-btnPlayers.addEventListener("click", () => setView("players"));
-btnRosters.addEventListener("click", () => setView("rosters"));
-
-/* init */
-setView("month");
-load();
-setInterval(load, REFRESH_MS);
-</script>
 </body>
 </html>
