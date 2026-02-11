@@ -705,13 +705,14 @@ function buildTeams(monthlyCSV, seasonCSV){
   seasonMap.forEach((_, k) => { if (!monthlyMap.has(k)) keys.push(k); });
 
   const out = [];
-  keys.forEach(k => {
+  keys.forEach((k, i) => {
     const m = monthlyMap.get(k);
     const s = seasonMap.get(k);
     out.push({
       team: (m?.team || s?.team || k),
       golfThisMonth: (m?.golfThisMonth || { value: Number.POSITIVE_INFINITY, display: "—" }),
-      seasonTotalPoints: (s?.seasonTotalPoints ?? 0)
+      seasonTotalPoints: (s?.seasonTotalPoints ?? 0),
+      baseIdx: i
     });
   });
 
